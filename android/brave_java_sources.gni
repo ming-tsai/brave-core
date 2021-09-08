@@ -5,6 +5,7 @@
 
 import("//brave/browser/brave_ads/android/java_sources.gni")
 import("//brave/components/brave_referrals/buildflags/buildflags.gni")
+import("//brave/components/brave_today/common/buildflags/buildflags.gni")
 import("//brave/components/permissions/android/java_sources.gni")
 import("//brave/components/safetynet/java_sources.gni")
 import("//components/feed/features.gni")
@@ -46,6 +47,7 @@ brave_java_sources = [
   "../../brave/android/java/org/chromium/chrome/browser/brave_news/BraveNewsUtils.java",
   "../../brave/android/java/org/chromium/chrome/browser/brave_news/CardBuilder.java",
   "../../brave/android/java/org/chromium/chrome/browser/brave_news/models/NewsItem.java",
+  "../../brave/android/java/org/chromium/chrome/browser/brave_news/models/PublisherCategory.java",
   "../../brave/android/java/org/chromium/chrome/browser/brave_stats/BraveStatsBottomSheetDialogFragment.java",
   "../../brave/android/java/org/chromium/chrome/browser/brave_stats/BraveStatsUtil.java",
   "../../brave/android/java/org/chromium/chrome/browser/compositor/layouts/BraveLayoutManagerChrome.java",
@@ -142,7 +144,6 @@ brave_java_sources = [
   "../../brave/android/java/org/chromium/chrome/browser/notifications/retention/RetentionNotificationUtil.java",
   "../../brave/android/java/org/chromium/chrome/browser/ntp/BraveNewTabPage.java",
   "../../brave/android/java/org/chromium/chrome/browser/ntp/BraveNewTabPageLayout.java",
-  "../../brave/android/java/org/chromium/chrome/browser/ntp/CustomLayoutManager.java",
   "../../brave/android/java/org/chromium/chrome/browser/ntp/IncognitoNewTabPageView.java",
   "../../brave/android/java/org/chromium/chrome/browser/ntp/widget/NTPWidgetAdapter.java",
   "../../brave/android/java/org/chromium/chrome/browser/ntp/widget/NTPWidgetItem.java",
@@ -324,6 +325,13 @@ brave_java_sources += brave_rewards_java_sources
 
 if (enable_brave_referrals) {
   brave_java_sources += [ "../../brave/android/java/org/chromium/chrome/browser/util/BraveReferrer.java" ]
+}
+
+
+if (brave_news_enabled) {
+  brave_java_sources += [
+    "../../brave/android/java/org/chromium/chrome/browser/brave_news/BraveNewsControllerFactory.java",
+  ]
 }
 
 brave_browser_ui_android_appmenu_internal_sources = [ "//brave/browser/ui/android/appmenu/internal/java/src/org/chromium/chrome/browser/ui/appmenu/BraveAppMenu.java" ]
