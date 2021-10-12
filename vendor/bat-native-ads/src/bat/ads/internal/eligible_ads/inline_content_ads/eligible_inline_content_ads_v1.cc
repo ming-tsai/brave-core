@@ -93,17 +93,14 @@ void EligibleAdsV1::GetForParentChildSegments(
       segments, dimensions,
       [=](const bool success, const SegmentList& segments,
           const CreativeInlineContentAdList& creative_ads) {
-        const CreativeInlineContentAdList eligible_creative_ads =
-            FilterCreativeAds(creative_ads, ad_events, browsing_history);
-
-        if (eligible_creative_ads.empty()) {
+        if (creative_ads.empty()) {
           BLOG(1, "No eligible ads for parent-child segments");
           GetForParentSegments(user_model, dimensions, ad_events,
                                browsing_history, callback);
           return;
         }
 
-        callback(/* had_opportunity */ true, eligible_creative_ads);
+        callback(/* had_opportunity */ true, creative_ads);
       });
 }
 
@@ -129,16 +126,13 @@ void EligibleAdsV1::GetForParentSegments(
       segments, dimensions,
       [=](const bool success, const SegmentList& segments,
           const CreativeInlineContentAdList& creative_ads) {
-        const CreativeInlineContentAdList eligible_creative_ads =
-            FilterCreativeAds(creative_ads, ad_events, browsing_history);
-
-        if (eligible_creative_ads.empty()) {
+        if (creative_ads.empty()) {
           BLOG(1, "No eligible ads for parent segments");
           GetForUntargeted(dimensions, ad_events, browsing_history, callback);
           return;
         }
 
-        callback(/* had_opportunity */ true, eligible_creative_ads);
+        callback(/* had_opportunity */ true, creative_ads);
       });
 }
 
@@ -154,14 +148,11 @@ void EligibleAdsV1::GetForUntargeted(
       {kUntargeted}, dimensions,
       [=](const bool success, const SegmentList& segments,
           const CreativeInlineContentAdList& creative_ads) {
-        const CreativeInlineContentAdList eligible_creative_ads =
-            FilterCreativeAds(creative_ads, ad_events, browsing_history);
-
-        if (eligible_creative_ads.empty()) {
+        if (creative_ads.empty()) {
           BLOG(1, "No eligible ads for untargeted segment");
         }
 
-        callback(/* had_opportunity */ true, eligible_creative_ads);
+        callback(/* had_opportunity */ true, creative_ads);
       });
 }
 

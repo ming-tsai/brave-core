@@ -5,5 +5,5 @@
 
 declare_args() {
   # Android does not yet use Brave News, on any channel
-  enable_brave_news = !is_android
+  enable_brave_news = true
 }

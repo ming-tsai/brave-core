@@ -35,6 +35,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 
 import androidx.annotation.NonNull;
@@ -151,6 +153,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import org.chromium.chrome.browser.brave_news.models.FeedItemsCard;
 
 /**
  * Brave's extension for ChromeActivity
@@ -201,16 +205,20 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
     private String mPurchaseToken = "";
     private String mProductId = "";
     private boolean mIsVerification;
+    public CompositorViewHolder compositorView;
+    public View inflatedSettingsBarLayout;
+    public String test;
 
     @SuppressLint("VisibleForTests")
     public BraveActivity() {
         // Disable key checker to avoid asserts on Brave keys in debug
         SharedPreferencesManager.getInstance().disableKeyCheckerForTesting();
     }
-
+    
     @Override
     public void onResumeWithNative() {
         super.onResumeWithNative();
+        Log.d("bn", "ondetach onResumeWithNative");
         BraveActivityJni.get().restartStatsUpdater();
         if (BraveVpnUtils.isBraveVpnFeatureEnable()) {
             InAppPurchaseWrapper.getInstance().startBillingServiceConnection(BraveActivity.this);
@@ -223,6 +231,7 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         if (BraveVpnUtils.isBraveVpnFeatureEnable()) {
             BraveVpnNativeWorker.getInstance().removeObserver(this);
         }
+        Log.d("bn", "ondetach onPauseWithNative");
         super.onPauseWithNative();
     }
 
@@ -328,7 +337,7 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
     @Override
     public void initializeState() {
         super.initializeState();
-
+        Log.d("bn", "ondetach initializeState  ");
         if (isNoRestoreState()) {
             CommandLine.getInstance().appendSwitch(ChromeSwitches.NO_RESTORE_STATE);
         }
@@ -345,8 +354,43 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
                     this, dataTypesArray, TimePeriod.ALL_TIME);
         }
 
+        setLoadedFeed(false);
+        setNewsItemsFeedCards(null);
+        // setNewsFeedScrollPosition(-1);
         BraveSearchEngineUtils.initializeBraveSearchEngineStates(getTabModelSelector());
     }
+
+    public boolean loadedFeed;
+    public CopyOnWriteArrayList<FeedItemsCard> newsItemsFeedCards;
+    public int newsFeedScrollPosition;
+
+    public boolean isLoadedFeed() {
+        return loadedFeed;
+    }
+
+    public void setLoadedFeed(boolean loadedFeed) {
+        this.loadedFeed = loadedFeed;
+    }
+
+    public CopyOnWriteArrayList<FeedItemsCard> getNewsItemsFeedCards() {
+        // Log.d("bn", "persistencetest getNewsItemsFeedCards:"+newsItemsFeedCards);
+        return newsItemsFeedCards;
+    }
+
+    public void setNewsItemsFeedCards(CopyOnWriteArrayList<FeedItemsCard> newsItemsFeedCards) {
+        // Log.d("bn", "persistencetest setNewsItemsFeedCards:"+newsItemsFeedCards);
+        this.newsItemsFeedCards = newsItemsFeedCards;
+        // getNewsItemsFeedCards();
+    }
+
+    public int getNewsFeedScrollPosition() {
+        return newsFeedScrollPosition;
+    }
+
+    public void setNewsFeedScrollPosition(int newsFeedScrollPosition) {
+        this.newsFeedScrollPosition = newsFeedScrollPosition;
+    }
+
 
     public int getImageCreditLayoutBottom() {
         ViewGroup imageCreditLayout = findViewById(R.id.image_credit_layout);
@@ -362,7 +406,7 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
 
     @Override
     public void onResume() {
-        Log.d("bn", " onresume  ");
+        Log.d("bn", "ondetach onresume  ");
         super.onResume();
 
         Tab tab = getActivityTab();
@@ -378,7 +422,6 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
     @Override
     public void onPause() {
         super.onPause();
-
         Tab tab = getActivityTab();
         if (tab == null)
             return;
@@ -410,7 +453,7 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
     @Override
     public void finishNativeInitialization() {
         super.finishNativeInitialization();
-
+        Log.d("bn", "ondetach finishNativeInitialization  ");
         if (SharedPreferencesManager.getInstance().readBoolean(
                     BravePreferenceKeys.BRAVE_DOUBLE_RESTART, false)) {
             SharedPreferencesManager.getInstance().writeBoolean(
@@ -455,6 +498,26 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
 
         if (RateUtils.getInstance(this).shouldShowRateDialog())
             showBraveRateDialog();
+
+        int visitedNewsCardsCount = SharedPreferencesManager.getInstance().readInt(
+                BravePreferenceKeys.BRAVE_NEWS_CARDS_VISITED);
+        Log.d("bn", "visitedNewsCardsCount:" + visitedNewsCardsCount);
+
+        // for Brave Newsa initialize the no. of cards to 0
+        SharedPreferencesManager.getInstance().writeInt(
+                BravePreferenceKeys.BRAVE_NEWS_CARDS_VISITED, 0);
+        SharedPreferencesManager.getInstance().writeInt(
+                BravePreferenceKeys.BRAVE_NEWS_CARDS_VIEWED, 0);
+
+        SharedPreferencesManager.getInstance().writeInt(
+                BravePreferenceKeys.BRAVE_NEWS_PROMOTION_CARDS_VISITED, 0);
+        SharedPreferencesManager.getInstance().writeInt(
+                BravePreferenceKeys.BRAVE_NEWS_PROMOTION_CARDS_VIEWED, 0);
+
+        SharedPreferencesManager.getInstance().writeInt(
+                BravePreferenceKeys.BRAVE_NEWS_DISPLAYAD_CARDS_VISITED, 0);
+        SharedPreferencesManager.getInstance().writeInt(
+                BravePreferenceKeys.BRAVE_NEWS_DISPLAYAD_CARDS_VIEWED, 0);
 
         // TODO commenting out below code as we may use it in next release
 
@@ -544,6 +607,26 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         }
         checkSetDefaultBrowserModal();
         checkFingerPrintingOnUpgrade();
+        compositorView = null;
+        inflatedSettingsBarLayout = null;
+        Tab tab = getActivityTab();
+        if (tab != null){
+            // // if it's new tab add the brave news settings bar to the layout
+            Log.d("bn", "inflateNewsSettingsBar tab:"+tab);
+            Log.d("bn", "inflateNewsSettingsBar tab.getUrl():"+tab.getUrl()+"tab.getUrl().getSpec()"+tab.getUrl().getSpec()+"isntp:"+UrlUtilities.isNTPUrl(tab.getUrl().getSpec()));
+            if (tab != null && tab.getUrl().getSpec() != null
+                    && UrlUtilities.isNTPUrl(tab.getUrl().getSpec())
+                    && BravePrefServiceBridge.getInstance().getNewsOptIn()) {
+                inflateNewsSettingsBar();
+            } else {
+                Log.d("bn", "inflateNewsSettingsBar else remove move it");
+                removeSetttingsBar();
+            } 
+        } else {
+            Log.d("bn", "tab is null");
+        }
+
+        Log.d("BN", "lifecycle BraveActivity finishNativeInitialization");
 
         if (BraveVpnUtils.isBraveVpnFeatureEnable()) {
             ConnectivityManager connectivityManager =
@@ -598,23 +681,79 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         braveVpnCalloutDialogFragment.setCancelable(false);
         braveVpnCalloutDialogFragment.show(
                 getSupportFragmentManager(), "BraveVpnCalloutDialogFragment");
+    }
 
-        Tab tab = getActivityTab();
-        if (tab != null){
-            // // if it's new tab add the brave news settings bar to the layout
-            if (tab != null && tab.getUrl().getSpec() != null
-                    && UrlUtilities.isNTPUrl(tab.getUrl().getSpec())) {
-                inflateNewsSettingsBar();
-            } else {
-                removeSetttingsBar();
-            } 
-        } else {
-            Log.d("bn", "tab is null");
+    public boolean newsSettingsBarInflated;
+
+    public boolean isNewsSettingsBarInflated(){
+        return this.newsSettingsBarInflated;
+    }
+
+    public void setNewsSettingsBarInflated(boolean newsSettingsBarInflated) {
+        this.newsSettingsBarInflated = newsSettingsBarInflated;
+    }
+
+    public void inflateNewsSettingsBar() {
+        // get the main compositor view that we'll use to manipulate the views
+        compositorView = findViewById(R.id.compositor_view_holder);
+        ViewGroup controlContainer = findViewById(R.id.control_container);
+        // Log.d("bn", "inflateNewsSettingsBar compositorView: "+compositorView+" controlContainer: "+controlContainer + "already here: "+findViewById(R.id.news_settings_bar));
+        if (findViewById(R.id.news_settings_bar) != null) {
+            return;
         }
+        if (compositorView != null && controlContainer != null){
+            Log.d("bn", "controlContainer: " + controlContainer);
+            Log.d("bn", "controlContainer: " + controlContainer.getBottom());
+            int[] coords = {0, 0};
+            controlContainer.getLocationOnScreen(coords);
+            int absoluteTop = coords[1];
+            int absoluteBottom = coords[1] + controlContainer.getHeight();
+            Log.d("bn", "controlContainer absoluteBottom: " + absoluteBottom);
+            Log.d("bn",
+                    "controlContainer controlContainer.getHeight(): " + controlContainer.getHeight());
 
+            for (int index = 0; index < ((ViewGroup) compositorView).getChildCount(); index++) {
+                View nextChild = ((ViewGroup) compositorView).getChildAt(index);
+                Log.d("bn",
+                        "compositorViewchildren braveactivity inflate nextchild before add:"
+                                + nextChild);
+            }
 
+            LayoutInflater inflater = LayoutInflater.from(this);
+            // inflate the settings bar layout
+            View inflatedSettingsBarLayout = inflater.inflate(R.layout.brave_news_settings_bar_layout, null);
+            RelativeLayout newContentButtonLayout = (RelativeLayout) inflater.inflate(R.layout.brave_news_load_new_content, null);
+            // add the bar to the layout stack
+            compositorView.addView(inflatedSettingsBarLayout, 2);
+            compositorView.addView(newContentButtonLayout, 3);
+            inflatedSettingsBarLayout.setAlpha(0f);
+            FrameLayout.LayoutParams inflatedLayoutParams =
+                    new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 100);
 
-        Log.d("BN", "lifecycle BraveActivity finishNativeInitialization");
+            FrameLayout.LayoutParams newContentButtonLayoutParams =
+                    new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+
+            // position bellow the control_container element (nevigation bar) with 25dp compensation
+            inflatedLayoutParams.setMargins(0, controlContainer.getBottom() - 25, 0, 0);
+            newContentButtonLayoutParams.setMargins(0, 400, 0, 0);
+            newContentButtonLayoutParams.gravity = Gravity.CENTER_HORIZONTAL;
+            newContentButtonLayout.setGravity(Gravity.CENTER_HORIZONTAL);
+            inflatedSettingsBarLayout.setLayoutParams(inflatedLayoutParams);
+            newContentButtonLayout.setLayoutParams(newContentButtonLayoutParams);
+
+            inflatedSettingsBarLayout.setVisibility(View.VISIBLE);
+
+            compositorView.invalidate();
+
+            for (int index = 0; index < ((ViewGroup) compositorView).getChildCount(); index++) {
+                View nextChild = ((ViewGroup) compositorView).getChildAt(index);
+                Log.d("bn",
+                        "compositorViewchildren braveactivity inflate nextchild after add:"
+                                + nextChild);
+            }
+        } else {
+            Log.d("bn", "inflateNewsSettingsBar null containers ");
+        }
     }
 
     public void removeSetttingsBar() {
@@ -627,57 +766,16 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         }
         if (compositorView != null) {
             View settingsBar = compositorView.getChildAt(2);
-            if (settingsBar.getId() == R.id.news_settings_bar) {
-                Log.d("bn", "settings bar remove:" + settingsBar.getId());
-                Log.d("bn", "settings bar remove:" + R.id.news_settings_bar);
-                Log.d("bn", "settings bar remove:" + R.layout.brave_news_settings_bar_layout);
-                // if (settingsBar.getId == "news_settings_bar"){
-                compositorView.removeView(settingsBar);
-                // }
+            if (settingsBar != null){                
+                if (settingsBar.getId() == R.id.news_settings_bar) {
+                    Log.d("bn", "settings bar remove:" + settingsBar.getId());
+                    Log.d("bn", "settings bar remove:" + R.id.news_settings_bar);
+                    Log.d("bn", "settings bar remove:" + R.layout.brave_news_settings_bar_layout);
+                    // if (settingsBar.getId == "news_settings_bar"){
+                    compositorView.removeView(settingsBar);
+                    // }
+                }
             }
-        }
-    }
-
-    private void inflateNewsSettingsBar() {
-        // get the main compositor view that we'll use to manipulate the views
-        CompositorViewHolder compositorView = findViewById(R.id.compositor_view_holder);
-        ViewGroup controlContainer = findViewById(R.id.control_container);
-        Log.d("bn", "controlContainer: " + controlContainer);
-        Log.d("bn", "controlContainer: " + controlContainer.getBottom());
-        int[] coords = {0, 0};
-        controlContainer.getLocationOnScreen(coords);
-        int absoluteTop = coords[1];
-        int absoluteBottom = coords[1] + controlContainer.getHeight();
-        Log.d("bn", "controlContainer absoluteBottom: " + absoluteBottom);
-        Log.d("bn",
-                "controlContainer controlContainer.getHeight(): " + controlContainer.getHeight());
-
-        for (int index = 0; index < ((ViewGroup) compositorView).getChildCount(); index++) {
-            View nextChild = ((ViewGroup) compositorView).getChildAt(index);
-            Log.d("bn",
-                    "compositorViewchildren braveactivity inflate nextchild before add:"
-                            + nextChild);
-        }
-
-        LayoutInflater inflater = LayoutInflater.from(this);
-        // inflate the settings bar layout
-        View inflatedLayout = inflater.inflate(R.layout.brave_news_settings_bar_layout, null);
-        // add the bar to the layout stack
-        compositorView.addView(inflatedLayout, 2);
-        inflatedLayout.setAlpha(0f);
-        FrameLayout.LayoutParams inflatedLayoutParams =
-                new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 100);
-        // position bellow the control_container element (nevigation bar) with 15dp compensation
-        inflatedLayoutParams.setMargins(0, controlContainer.getBottom() - 25, 0, 0);
-        inflatedLayout.setLayoutParams(inflatedLayoutParams);
-
-        compositorView.invalidate();
-
-        for (int index = 0; index < ((ViewGroup) compositorView).getChildCount(); index++) {
-            View nextChild = ((ViewGroup) compositorView).getChildAt(index);
-            Log.d("bn",
-                    "compositorViewchildren braveactivity inflate nextchild after add:"
-                            + nextChild);
         }
     }
 
@@ -1013,10 +1111,15 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         TabModel tabModel = getCurrentTabModel();
         int tabRewardsIndex = TabModelUtils.getTabIndexByUrl(tabModel, url);
 
+        Log.d("bn", "lifecycle BraveActivity openNewOrSelectExistingTab");
         Tab tab = selectExistingTab(url);
         if (tab != null) {
+
+            Log.d("bn", "lifecycle BraveActivity openNewOrSelectExistingTab openNewOrSelectExistingTab");
             return tab;
         } else { // Open a new tab
+
+            Log.d("bn", "lifecycle BraveActivity openNewOrSelectExistingTab open new");
             return getTabCreator(false).launchUrl(url, TabLaunchType.FROM_CHROME_UI);
         }
     }

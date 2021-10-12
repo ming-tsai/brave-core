@@ -12,6 +12,7 @@
 #include "brave/components/brave_rewards/common/pref_names.h"
 #include "brave/components/brave_shields/browser/brave_shields_util.h"
 #include "brave/components/brave_shields/common/pref_names.h"
+#include "brave/components/brave_today/common/pref_names.h"
 #include "brave/components/brave_sync/brave_sync_prefs.h"
 #include "brave/components/decentralized_dns/buildflags/buildflags.h"
 #include "brave/components/ipfs/buildflags/buildflags.h"
@@ -560,6 +561,29 @@ jint JNI_BravePrefServiceBridge_GetENSResolveMethod(JNIEnv* env) {
 #else
   return 0;
 #endif
+}
+
+void JNI_BravePrefServiceBridge_SetNewsOptIn(JNIEnv* env,
+    jboolean value) {
+    GetOriginalProfile()->GetPrefs()->SetBoolean(brave_news::prefs::kBraveTodayOptedIn, value);
+  // g_browser_process->local_state()->SetBoolean(kBraveTodayOptedIn, value);
+}
+
+jboolean JNI_BravePrefServiceBridge_GetNewsOptIn(JNIEnv* env) {
+  // return g_browser_process->local_state()->GetBoolean(kBraveTodayOptedIn);
+
+  return GetOriginalProfile()->GetPrefs()->GetBoolean(brave_news::prefs::kBraveTodayOptedIn);  
+}
+
+void JNI_BravePrefServiceBridge_SetShowNews(JNIEnv* env,
+    jboolean value) {
+  GetOriginalProfile()->GetPrefs()->SetBoolean(brave_news::prefs::kNewTabPageShowToday, value);
+  // g_browser_process->local_state()->SetBoolean(kNewTabPageShowToday, value);
+}
+
+jboolean JNI_BravePrefServiceBridge_GetShowNews(JNIEnv* env) {
+  // return g_browser_process->local_state()->GetBoolean(kNewTabPageShowToday);
+  return GetOriginalProfile()->GetPrefs()->GetBoolean(brave_news::prefs::kNewTabPageShowToday); 
 }
 
 }  // namespace android

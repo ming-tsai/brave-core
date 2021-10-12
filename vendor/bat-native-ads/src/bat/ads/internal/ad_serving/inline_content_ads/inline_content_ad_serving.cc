@@ -31,7 +31,7 @@ AdServing::AdServing(
   DCHECK(subdivision_targeting);
   DCHECK(anti_targeting_resource);
 
-  const int version = ::ads::features::GetAdServingVersion();
+  const int version = 1;  // ::ads::features::GetAdServingVersion();
   eligible_ads_ = EligibleAdsFactory::Build(version, subdivision_targeting,
                                             anti_targeting_resource);
 }
@@ -62,13 +62,13 @@ void AdServing::MaybeServeAd(const std::string& dimensions,
     return;
   }
 
-  frequency_capping::PermissionRules permission_rules;
-  if (!permission_rules.HasPermission()) {
-    BLOG(1,
-         "Inline content ad not served: Not allowed due to permission rules");
-    FailedToServeAd(dimensions, callback);
-    return;
-  }
+  // frequency_capping::PermissionRules permission_rules;
+  // if (!permission_rules.HasPermission()) {
+  //   BLOG(1,
+  //        "Inline content ad not served: Not allowed due to permission rules");
+  //   FailedToServeAd(dimensions, callback);
+  //   return;
+  // }
 
   const ad_targeting::UserModelInfo user_model = ad_targeting::BuildUserModel();
 

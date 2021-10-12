@@ -37,6 +37,10 @@ import org.chromium.chrome.browser.settings.SearchPreference;
 import org.chromium.components.browser_ui.settings.SettingsUtils;
 import android.widget.Button;
 
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+
 import org.chromium.brave_news.mojom.Publisher;
 import org.chromium.brave_news.mojom.BraveNewsController;
 import org.chromium.chrome.browser.brave_news.BraveNewsControllerFactory;
@@ -44,9 +48,13 @@ import org.chromium.chrome.browser.brave_news.models.NewsItem;
 import org.chromium.chrome.browser.brave_news.models.PublisherCategory;
 import org.chromium.mojo.bindings.ConnectionErrorHandler;
 import org.chromium.mojo.system.MojoException;
+import org.chromium.chrome.browser.preferences.BravePrefServiceBridge;
+
 import java.util.Map;
 
 import java.util.HashMap;
+
+import java.util.TreeMap;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,11 +70,10 @@ public class BraveNewsPreferences
     private ChromeSwitchPreference turnOnNews;
     private ChromeSwitchPreference showNews;
     private PreferenceCategory yourSources;
-    private ChromeBasePreference addSource;
     private EditText mEditText;
     private PreferenceScreen mainScreen;
     private PreferenceManager preferenceManager;
-    private HashMap <String, List<Publisher>> categsPublishers;
+    private TreeMap <String, List<Publisher>> categsPublishers;
 
     private final HashMap<String, Preference> mRemovedPreferences = new HashMap<>();
     private BraveNewsController mBraveNewsController; 
@@ -84,80 +91,40 @@ public class BraveNewsPreferences
         InitBraveNewsController();
         turnOnNews = (ChromeSwitchPreference) findPreference(PREF_TURN_ON_NEWS);
         showNews = (ChromeSwitchPreference) findPreference(PREF_SHOW_NEWS);
-        yourSources = (PreferenceCategory) findPreference(PREF_SOURCES_SECTION);
-        addSource = (ChromeBasePreference) findPreference(PREF_ADD_SOURCES);
         settingsFragment = this;
 
         turnOnNews.setOnPreferenceChangeListener(this);
         showNews.setOnPreferenceChangeListener(this);
-        addSource.setOnPreferenceChangeListener(this);
 
-        categsPublishers = new HashMap<>();
+        categsPublishers = new TreeMap<>();
         mBraveNewsController.getPublishers((publishers) -> {
-            Log.d("bn", "getfeed publishers: " + publishers);
+            List<Publisher> allPublishers = new ArrayList<>();
+            List<Publisher> categoryPublishers = new ArrayList<>();
             for (Map.Entry<String,Publisher> entry : publishers.entrySet()) {
                 String key = entry.getKey();
                 Publisher publisher = entry.getValue();
-                categsPublishers.computeIfAbsent(publisher.categoryName, k ->new ArrayList<>()).add(publisher);
+                // categsPublishers.computeIfAbsent(publisher.categoryName, k ->new ArrayList<>()).add(publisher);
+                categoryPublishers.add(publisher);
+                categsPublishers.put(publisher.categoryName, categoryPublishers);
             }
-
+            categsPublishers.put("All Sources", allPublishers);
             addCategs(categsPublishers);
         });
     }
 
 
-    private void addCategs(HashMap <String, List<Publisher>> publisherCategories){
+    private void addCategs(TreeMap <String, List<Publisher>> publisherCategories){
 
         for(Map.Entry<String,List<Publisher>> map : publisherCategories.entrySet()){
             String category = map.getKey();
             List<Publisher> publishers = map.getValue();
 
-            // ChromeSwitchPreference source = new ChromeSwitchPreference(ContextUtils.getApplicationContext());
             ChromeBasePreference source = new ChromeBasePreference(ContextUtils.getApplicationContext());
             source.setTitle(category);
             source.setKey(category);
             Bundle prefExtras = source.getExtras();
             prefExtras.putString("category", category);
             source.setFragment("org.chromium.chrome.browser.settings.BraveNewsCategorySources");
-
-            // source.setOnPreferenceChangeListener(this);
-            // source.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            //     @Override
-            //     public boolean onPreferenceClick(Preference preference) {
-                    
-            //         PreferenceScreen sourcesScreen = preferenceManager.createPreferenceScreen(ContextUtils.getApplicationContext());
-            //         sourcesScreen.setLayoutResource(R.layout.custom_brave_news_sources_preference);
-       
-            //         SearchPreference search = new SearchPreference(ContextUtils.getApplicationContext()); 
-            //         search.setKey("search_pref");
-            //         search.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            //             @Override
-            //             public boolean onPreferenceChange(Preference preference, Object newValue) {
-            //                 for (Publisher publisher : publishers){
-            //                     SwitchPreference publisherSource = preferenceManager.findPreference(publisher.publisherName);
-            //                     if (publisher.publisherName.toLowerCase().contains((String) newValue)){
-            //                         publisherSource.setVisible(true);
-            //                     } else {
-            //                         publisherSource.setVisible(false);
-            //                     }
-            //                 }
-            //                 return false;
-            //             }
-            //         });
-            //         sourcesScreen.addPreference(search); 
-
-            //         for (Publisher publisher : publishers){
-            //             SwitchPreference source = new SwitchPreference(ContextUtils.getApplicationContext()); 
-            //             source.setTitle(publisher.publisherName);
-            //             source.setKey(publisher.publisherName);
-            //             source.setChecked(publisher.isEnabled); 
-            //             sourcesScreen.addPreference(source); 
-            //         }
-                    
-            //         setPreferenceScreen(sourcesScreen);
-            //         return false;
-            //     }
-            // });
             mainScreen.addPreference(source);
         }
     }
@@ -177,11 +144,6 @@ public class BraveNewsPreferences
                 BraveNewsControllerFactory.getInstance().getBraveNewsController(this);
     }
 
-    // @Override
-    // public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
-    //         @Nullable Bundle savedInstanceState) {
-    // }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
@@ -192,123 +154,55 @@ public class BraveNewsPreferences
         preferenceManager = getPreferenceManager();
         mainScreen = preferenceManager.getPreferenceScreen();
 
-        SharedPreferences sharedPreferences = ContextUtils.getAppSharedPreferences();
-        boolean isNewsOn = sharedPreferences.getBoolean(PREF_TURN_ON_NEWS, false);
+        boolean isNewsOn =  BravePrefServiceBridge.getInstance().getNewsOptIn();
 
         if (!isNewsOn) {
             turnOnNews.setChecked(false);
             showNews.setVisible(false);
-            yourSources.setVisible(false);
-            addSource.setVisible(false);
         } else {
             turnOnNews.setChecked(true);
+            turnOnNews.setVisible(false);
             showNews.setVisible(true);
-            if (sharedPreferences.getBoolean(PREF_SHOW_NEWS, false)) {
+            if ( BravePrefServiceBridge.getInstance().getShowNews()) {
                 showNews.setChecked(true);
             } else {
                 showNews.setChecked(false);
             }
-
-            yourSources.setVisible(true);
-            addSource.setVisible(true);
         }
     }
 
-    // @Override
-    // public boolean onCreateOptionsMenu(Menu menu) {
-    //     MenuInflater inflater = getMenuInflater();
-    //     inflater.inflate(R.menu.options_menu, menu);
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+         Log.d("bn", "prefclose in bravenews");
+        if (item.getItemId() == R.id.close_menu_id) {
+                        Log.d("bn", "prefclose in menu bravenews");
 
-    //     return true;
-    // }
+            // Intent intent = new Intent(this, ChromeTabbedActivity.class);
+            // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            // startActivity(intent);
+            
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         String key = preference.getKey();
-        SharedPreferences.Editor sharedPreferencesEditor =
-                ContextUtils.getAppSharedPreferences().edit();
         Log.d("BN", "pref change key:" + key);
         if (PREF_TURN_ON_NEWS.equals(key)) {
-            sharedPreferencesEditor.putBoolean(PREF_TURN_ON_NEWS, (boolean) newValue);
+            BravePrefServiceBridge.getInstance().setNewsOptIn((boolean) newValue);
             if ((boolean) newValue) {
                 Log.d("BN", "pref true add stuff");
-
                 showNews.setVisible(true);
                 showNews.setChecked(true);
-                sharedPreferencesEditor.putBoolean(PREF_SHOW_NEWS, true);
-                yourSources.setVisible(true);
-                addSource.setVisible(true);
+                BravePrefServiceBridge.getInstance().setShowNews(true);
             } else {
                 showNews.setVisible(false);
-                yourSources.setVisible(false);
-                addSource.setVisible(false);
             }
         } else if (PREF_SHOW_NEWS.equals(key)) {
-            sharedPreferencesEditor.putBoolean(PREF_SHOW_NEWS, (boolean) newValue);
-            if ((boolean) newValue) {
-            } else {
-            }
-
-            // } else if (PREF_ADD_SOURCES.equals(key)) {
-            //     Log.d("bn", "edittext:" + mEditText);
-
-            //     PreferenceManager manager =  getPreferenceManager();
-            //     PreferenceScreen sourcesScreen =
-            //     manager.createPreferenceScreen(ContextUtils.getApplicationContext());
-            //     SwitchPreference source = new
-            //     SwitchPreference(ContextUtils.getApplicationContext()); source.setTitle((String)
-            //     newValue); sourcesScreen.addPreference(source);
-
-            //     setPreferenceScreen(sourcesScreen);
-            //     return false;
-
-            // getPreferenceScreen().setOrderingAsAdded(true);
-            // SwitchPreference source = new SwitchPreference(ContextUtils.getApplicationContext());
-            // source.setTitle((String) newValue);
-            // source.setChecked(true);
-            // int buttonOrder = addSource.getOrder();
-            // source.setOrder(++buttonOrder);
-            // getPreferenceScreen().addPreference(source);
-        } else if (PREF_ADD_SOURCES.equals(key)) {
-            Log.d("bn", "edittext:" + mEditText);
-
-            // PreferenceManager manager =  getPreferenceManager();
-            // PreferenceScreen sourcesScreen =
-            // manager.createPreferenceScreen(ContextUtils.getApplicationContext());
-            // CheckBoxPreference source = new
-            // CheckBoxPreference(ContextUtils.getApplicationContext()); source.setTitle((String)
-            // newValue); source.setChecked(true); sourcesScreen.addPreference(source);
-
-            // Preference button = new Preference(ContextUtils.getApplicationContext());
-            // button.setTitle("Add");
-            // button.setKey("add_news_source");
-            // button.setSummary("Cool button stuff");
-            // button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            //     @Override
-            //     public boolean onPreferenceClick(Preference preference) {
-            //         Log.d("bn", "adding sources...");
-
-            //         setPreferenceScreen(mainScreen);
-            //          // SettingsUtils.addPreferencesFromResource(this,
-            //          R.xml.brave_news_preferences);
-            //         // inflateFromResource(ContextUtils.getApplicationContext(),
-            //         R.layout.brave_news_preferences, getPreferenceScreen()); return true;
-            //     }
-            // });
-            // sourcesScreen.addPreference(button);
-
-            // setPreferenceScreen(sourcesScreen);
-            // getPreferenceManager().setOnNavigateToScreenListener(new
-            // PreferenceManager.OnNavigateToScreenListener() {
-            //     @Override
-            //     public void onNavigateToScreen(PreferenceScreen preferenceScreen) {
-            //         Log.d("bn", "onNavigateToScreen..." + preferenceScreen.getTitle() + "
-            //         parent:" + preferenceScreen.getParent());
-            //     }
-            // });
-
-            return true;
-        }
+            BravePrefServiceBridge.getInstance().setShowNews( (boolean) newValue);
+        } 
         return true;
     }
 

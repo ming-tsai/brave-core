@@ -23,7 +23,23 @@ BraveNewsControllerFactory* BraveNewsControllerFactory::GetInstance() {
 }
 
 // static
-BraveNewsController* BraveNewsControllerFactory::GetForContext(
+// BraveNewsController* BraveNewsControllerFactory::GetForContext(
+//     content::BrowserContext* context) {
+//   return static_cast<BraveNewsController*>(
+//       GetInstance()->GetServiceForBrowserContext(context, true));
+// }
+
+// static
+mojo::PendingRemote<mojom::BraveNewsController>
+BraveNewsControllerFactory::GetForContext(content::BrowserContext* context) {
+
+  return static_cast<BraveNewsController*>(
+             GetInstance()->GetServiceForBrowserContext(context, true))
+      ->MakeRemote();
+}
+
+// static
+BraveNewsController* BraveNewsControllerFactory::GetControllerForContext(
     content::BrowserContext* context) {
   return static_cast<BraveNewsController*>(
       GetInstance()->GetServiceForBrowserContext(context, true));
@@ -37,7 +53,7 @@ BraveNewsControllerFactory::BraveNewsControllerFactory()
   DependsOn(HistoryServiceFactory::GetInstance());
 }
 
-BraveNewsControllerFactory::~BraveNewsControllerFactory() = default;
+BraveNewsControllerFactory::~BraveNewsControllerFactory() {}
 
 KeyedService* BraveNewsControllerFactory::BuildServiceInstanceFor(
     content::BrowserContext* context) const {

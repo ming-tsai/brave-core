@@ -31,6 +31,8 @@
 #include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/scoped_user_pref_update.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
+#include "services/network/public/cpp/simple_url_loader.h"
+#include <android/log.h>
 
 namespace brave_news {
 
@@ -95,6 +97,13 @@ void BraveNewsController::Bind(
 void BraveNewsController::ClearHistory() {
   // TODO(petemill): Clear history once/if we actually store
   // feed cache somewhere.
+}
+
+mojo::PendingRemote<mojom::BraveNewsController>
+BraveNewsController::MakeRemote() {
+  mojo::PendingRemote<mojom::BraveNewsController> remote;
+  receivers_.Add(this, remote.InitWithNewPipeAndPassReceiver());
+  return remote;
 }
 
 void BraveNewsController::GetFeed(GetFeedCallback callback) {
@@ -173,16 +182,20 @@ void BraveNewsController::GetDisplayAd(GetDisplayAdCallback callback) {
   if (!ads_service_) {
     VLOG(1) << "GetDisplayAd: no ads service";
     std::move(callback).Run(nullptr);
+    return;
   }
   auto on_ad_received = base::BindOnce(
       [](GetDisplayAdCallback callback, const bool success,
          const std::string& dimensions, const base::DictionaryValue& ad_data) {
+        __android_log_write(ANDROID_LOG_VERBOSE, "bn", "GetDisplayAd DisplayAd: foobar");
         if (!success) {
           VLOG(1) << "GetDisplayAd: no ad";
+          __android_log_write(ANDROID_LOG_VERBOSE, "bn", "GetDisplayAd DisplayAd: no ad");
           std::move(callback).Run(nullptr);
           return;
         }
         VLOG(1) << "GetDisplayAd: GOT ad";
+        __android_log_write(ANDROID_LOG_VERBOSE, "bn", "GetDisplayAd DisplayAd: got ad");
         // Convert to our mojom entity.
         // TODO(petemill): brave_ads seems to use mojom, perhaps we can receive
         // and send to callback the actual typed mojom struct from brave_ads?

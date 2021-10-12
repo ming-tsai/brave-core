@@ -264,6 +264,25 @@ public class BravePrefServiceBridge {
         return BravePrefServiceBridgeJni.get().getWebrtcPolicy();
     }
 
+    public void setNewsOptIn(boolean value) {
+        BravePrefServiceBridgeJni.get().setNewsOptIn(value);
+    }
+
+    public boolean getNewsOptIn() {
+        boolean getNewsOptIn = BravePrefServiceBridgeJni.get().getNewsOptIn();
+        Log.d("bn", "newsprefs getNewsOptIn:"+getNewsOptIn);
+        return BravePrefServiceBridgeJni.get().getNewsOptIn();
+    }
+    public void setShowNews(boolean value) {
+        BravePrefServiceBridgeJni.get().setShowNews(value);
+    }
+
+    public boolean getShowNews() {
+        boolean getShowNews = BravePrefServiceBridgeJni.get().getShowNews();
+        Log.d("bn", "newsprefs getShowNews:"+getShowNews);
+        return BravePrefServiceBridgeJni.get().getShowNews();
+    }
+
     @NativeMethods
     interface Natives {
         void setCosmeticFilteringControlType(int type);
@@ -338,5 +357,12 @@ public class BravePrefServiceBridge {
 
         void setWebrtcPolicy(int policy);
         int getWebrtcPolicy();
+
+        void setNewsOptIn(boolean value);
+        boolean getNewsOptIn();
+
+        void setShowNews(boolean value);
+        boolean getShowNews();
+
     }
 }
