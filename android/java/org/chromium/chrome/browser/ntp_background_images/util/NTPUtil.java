@@ -93,7 +93,6 @@ public class NTPUtil {
     }
 
     public static DisplayAd getCurrentDisplayAd(){
-        Log.d("bn", "newsEvents  getCurrentDisplayAd:"+currentDisplayAd);
         return currentDisplayAd;
     }
 
@@ -104,50 +103,6 @@ public class NTPUtil {
         BraveAdsNativeHelper.nativeSetAdsEnabled(Profile.getLastUsedRegularProfile());
         BraveRewardsNativeWorker.getInstance().SetAutoContributeEnabled(true);
     } 
-
-    public static void showItemInfo(FeedItemsCard items, String id) {
-
-        if (items.getFeedItems() != null) {          
-            for (FeedItemCard itemCard : items.getFeedItems()){
-
-                FeedItem feedItem = itemCard.getFeedItem();
-                
-                // Log.d("bn", id + " getImageByte: " + Arrays.toString(itemCard.getImageByte()));
-                FeedItemMetadata itemMetaData = new FeedItemMetadata();
-                switch(feedItem.which()){
-                    case FeedItem.Tag.Article:
-                        
-                        Article article = feedItem.getArticle();
-                        FeedItemMetadata articleData = article.data;
-                        
-                        Log.d("bn", id+" articleData: " + articleData.title);
-                        break;
-                    case FeedItem.Tag.PromotedArticle:
-                        PromotedArticle promotedArticle = feedItem.getPromotedArticle();
-                        FeedItemMetadata promotedArticleData = promotedArticle.data;
-                        String creativeInstanceId = promotedArticle.creativeInstanceId;
-                        // braveNewsItems.add(item.getPromotedArticle());
-
-                        Log.d("bn", id+" PromotedArticle: " + promotedArticleData.title);
-                        // Log.d("bn", id+"getfeed feed pages showFeedItemInfo type PromotedArticle creativeInstanceId: " + creativeInstanceId);
-                        break;                                            
-                    case FeedItem.Tag.Deal:
-                        Deal deal = feedItem.getDeal();
-                        FeedItemMetadata dealData = deal.data;
-                        String offersCategory = deal.offersCategory;
-
-                        // braveNewsItems.add(item.getDeal());
-                        // braveNewsItems.add(deal.data);
-                        Log.d("bn", id+" Deal: " + dealData.title);
-                        // Log.d("bn", id+"getfeed feed pages showFeedItemInfo type Deal offersCategory: " + offersCategory); 
-                        break;
-                      // textView.setText(itemData.title);  
-                }
-            }
-        } else {
-            Log.d("bn", id+" items.getFeedItems() :  null, items: " + items);
-        }
-    }
 
     public static int correctImageCreditLayoutTopPosition(NTPImage ntpImage) {
         int imageCreditCorrection = 0;
@@ -162,47 +117,25 @@ public class NTPUtil {
         if (BraveActivity.getBraveActivity() != null) {
             BraveActivity activity = BraveActivity.getBraveActivity();
 
-            // DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
-            // float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
-
             float dpHeight = ConfigurationUtils.getDpDisplayMetrics(activity).get("height");
             int pxHeight = dpToPx(activity, dpHeight);
 
             boolean isTablet = ConfigurationUtils.isTablet(activity);
             boolean isLandscape = ConfigurationUtils.isLandscape(activity);
-
-             Log.d("bn", "correctImageCreditLayoutTopPosition getNewsOptIn:" + BravePrefServiceBridge.getInstance().getNewsOptIn() +
-              " getShowNews:"+BravePrefServiceBridge.getInstance().getShowNews());
-             Log.d("bn", "correctImageCreditLayoutTopPosition isCompensate:" + isCompensate + " pxHeight:"+dpHeight+" dpHeight:" +dpHeight);
             imageCreditCorrection = isLandscape ? (int) (pxHeight * (isCompensate ? 0.46 : 0.54))
                                                 : (int) (pxHeight * (isCompensate ? 0.70 : 0.30));
             if (ntpImage instanceof BackgroundImage) {
                 if (!isTablet) {
-                    // Log.d("bn",
-                    //         "correctImageCreditLayoutTopPosition phone background image dpHeight:"
-                    //                 + dpHeight);
-                    // imageCreditCorrection = isLandscape ? (int) (dpHeight - 250) : (int)
-                    // (dpHeight + 150);
                     imageCreditCorrection = isLandscape
                             ? (int) (pxHeight * (isCompensate ? 0.12 : 0.88))
                             : (int) (pxHeight * (isCompensate ? 0.46 : 0.54));
                 }
             } else {
                 if (!isTablet) {
-                    // Log.d("bn",
-                    //         "correctImageCreditLayoutTopPosition phone sponsored image dpHeight:"
-                    //                 + dpHeight);
-                    // imageCreditCorrection = isLandscape ? (int) (dpHeight - 350) : (int)
-                    // (dpHeight - 120);
                     imageCreditCorrection = isLandscape
                             ? (int) (pxHeight * (isCompensate ? 0.02 : 0.98))
                             : (int) (pxHeight * (isCompensate ? 0.30 : 0.70));
                 } else {
-                    // Log.d("bn",
-                    //         "correctImageCreditLayoutTopPosition tablet sponsored image dpHeight:"
-                    //                 + dpHeight);
-                    // imageCreditCorrection = isLandscape ? (int) (dpHeight - 320) : (int)
-                    // (dpHeight + 150);
                     imageCreditCorrection = isLandscape
                             ? (int) (pxHeight * (isCompensate ? 0.28 : 0.72))
                             : (int) (pxHeight * (isCompensate ? 0.56 : 0.44));
@@ -210,41 +143,29 @@ public class NTPUtil {
             }
         }
 
-        Log.d("bn",
-                "correctImageCreditLayoutTopPosition imageCreditCorrection:"
-                        + imageCreditCorrection) ;
-
         return imageCreditCorrection;
     }
 
     public static void updateOrientedUI(
             Context context, ViewGroup view, Point size, NTPImage ntpImage) {
-        Log.d("bn", "optin click after ");
+
         SharedPreferences sharedPreferences = ContextUtils.getAppSharedPreferences();
         boolean isNewsOn =
                 sharedPreferences.getBoolean(BraveNewsPreferences.PREF_TURN_ON_NEWS, false);
         boolean isShowNewsOn =
                 sharedPreferences.getBoolean(BraveNewsPreferences.PREF_SHOW_NEWS, false);
-        Log.d("bn", "optin isNewsOn:" + isNewsOn + " isShowNewsOn:" + isShowNewsOn);
+
         LinearLayout parentLayout = (LinearLayout)view.findViewById(R.id.parent_layout);
         CompositorViewHolder compositorView = view.findViewById(R.id.compositor_view_holder);
         ViewGroup imageCreditLayout = view.findViewById(R.id.image_credit_layout);
         ViewGroup optinLayout = view.findViewById(R.id.optin_layout_id);
-        // RecyclerView newsRecycler = (RecyclerView) view.findViewById(R.id.newsRecycler);
         ViewGroup mainLayout = view.findViewById(R.id.ntp_main_layout);
 
         ImageView sponsoredLogo = (ImageView)view.findViewById(R.id.sponsored_logo);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(dpToPx(context, 170), dpToPx(context, 170));
 
-        Log.d("BN", "first compositorView:" + compositorView);
-
-        // parentLayout.removeView(newsRecycler);
         parentLayout.removeView(mainLayout);
-        // parentLayout.removeView(imageCreditLayout);
-
-        // parentLayout.addView(newsRecycler);
         parentLayout.addView(mainLayout);
-        // parentLayout.addView(imageCreditLayout);
 
         parentLayout.setOrientation(LinearLayout.VERTICAL);
 
@@ -266,38 +187,13 @@ public class NTPUtil {
         mainLayoutLayoutParams.weight = 1f;
         mainLayout.setLayoutParams(mainLayoutLayoutParams);
 
-        Log.d("BN", "ntputildpHeight: " + dpHeight);
-        Log.d("BN", "ntputildpHeight: " + dpToPx(context, dpHeight));
-        Log.d("BN", "ntputildpHeight: " + displayMetrics.heightPixels);
-        Log.d("BN", "ntputildpHeight: " + dpToPx(context, displayMetrics.heightPixels));
-
         LinearLayout.LayoutParams imageCreditLayoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-
-        // int topMargin = dpToPx(context, (int) (dpHeight * 0.6));
-        // if (ConfigurationUtils.isLandscape(context)){
-        //     if (ConfigurationUtils.isTablet(context)){
-        //         topMargin = dpToPx(context, (int) (dpHeight * 0.5));
-        //     } else {
-        //         topMargin = dpToPx(context, (int) (dpHeight * 0.3));
-        //     }
-        // } else {
-        //     if (ConfigurationUtils.isTablet(context)){
-        //         topMargin = dpToPx(context, (int) (dpHeight * 0.7));
-        //     }
-        // }
 
         int topMargin = correctImageCreditLayoutTopPosition(ntpImage);
 
         imageCreditLayoutParams.setMargins(0, topMargin, 0, 50);
-        // imageCreditLayoutParams.setMargins(0, displayMetrics.heightPixels, 0, 0);
         imageCreditLayout.setLayoutParams(imageCreditLayoutParams);
-
-        // FrameLayout.LayoutParams recyclerParam = (FrameLayout.LayoutParams)
-        // newsRecycler.getLayoutParams(); recyclerParam.setMargins(0, imageCreditLayout.getBottom()
-        // + 20, 0, 40 ); newsRecycler.setLayoutParams(recyclerParam);
-        // newsRecycler.getLayoutManager().findViewByPosition(0).setLayoutParams(recyclerParam);
-        // Log.d("bn", "imageCreditLayout bottom:" + imageCreditLayout.getBottom());
 
         LinearLayout.LayoutParams optinLayoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -312,8 +208,6 @@ public class NTPUtil {
         feedSpinner.setLayoutParams(feedSpinnerParams);
 
         layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
-        // layoutParams.setMargins(0, 400, 0, dpToPx(context, 5));
-        // layoutParams.setMargins(0, 400, 0, 0);
         sponsoredLogo.setLayoutParams(layoutParams);
     }
 

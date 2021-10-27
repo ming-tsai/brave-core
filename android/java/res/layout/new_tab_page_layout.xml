@@ -125,11 +125,11 @@
             </FrameLayout>
 
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/newsRecycler"
-            android:layout_width="match_parent"
-            android:layout_height="750dp"
-            android:layout_marginTop="-50dp"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/newsRecycler"
+                android:layout_width="match_parent"
+                android:layout_height="750dp"
+                android:layout_marginTop="-50dp"
              />
 
             <include
@@ -141,6 +141,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone" />
+
+        </LinearLayout>
 
             <!-- Search box -->
             <include layout="@layout/fake_search_box_layout"/>
@@ -199,7 +201,7 @@
                 android:visibility="gone" />
 
 
-        </LinearLayout>
+
 
     </LinearLayout>
 
@@ -211,13 +213,8 @@
         android:visibility="gone"
         android:layout_gravity="center" />
 
-
-
     <include layout="@layout/ntp_non_disruptive_banner"/>
     <include layout="@layout/bre_bottom_banner"/>
-
-
-
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/super_referral_logo"
@@ -230,7 +227,5 @@
         android:contentDescription="@null"
         android:visibility="gone"
         app:backgroundTint="@color/qr_button_color"/>
-
-
 
 </org.chromium.chrome.browser.ntp.BraveNewTabPageLayout>

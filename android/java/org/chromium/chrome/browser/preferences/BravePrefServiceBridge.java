@@ -270,7 +270,6 @@ public class BravePrefServiceBridge {
 
     public boolean getNewsOptIn() {
         boolean getNewsOptIn = BravePrefServiceBridgeJni.get().getNewsOptIn();
-        Log.d("bn", "newsprefs getNewsOptIn:"+getNewsOptIn);
         return BravePrefServiceBridgeJni.get().getNewsOptIn();
     }
     public void setShowNews(boolean value) {
@@ -279,7 +278,6 @@ public class BravePrefServiceBridge {
 
     public boolean getShowNews() {
         boolean getShowNews = BravePrefServiceBridgeJni.get().getShowNews();
-        Log.d("bn", "newsprefs getShowNews:"+getShowNews);
         return BravePrefServiceBridgeJni.get().getShowNews();
     }
 

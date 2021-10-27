@@ -43,9 +43,9 @@ import org.chromium.brave_news.mojom.FeedItemMetadata;
 import org.chromium.brave_news.mojom.PromotedArticle;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.brave_news.BraveNewsControllerFactory;
+import org.chromium.chrome.browser.brave_news.BraveNewsUtils;
 import org.chromium.chrome.browser.brave_news.models.FeedItemCard;
 import org.chromium.chrome.browser.brave_news.models.FeedItemsCard;
-import org.chromium.chrome.browser.brave_news.models.NewsItem;
 import org.chromium.chrome.browser.ntp.BraveNewTabPageLayout;
 import org.chromium.chrome.browser.ntp_background_images.util.NTPUtil;
 import org.chromium.mojo.bindings.ConnectionErrorHandler;
@@ -59,7 +59,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class BraveNewsAdapterFeedCard extends RecyclerView.Adapter<BraveNewsAdapterFeedCard.ViewHolder> {
 
     private LayoutInflater mInflater;
-    public RecycleItemClickListener mClickListener;
     private int mType;
     private Context mContext;
     private Activity mActivity;
@@ -67,9 +66,7 @@ public class BraveNewsAdapterFeedCard extends RecyclerView.Adapter<BraveNewsAdap
     private LinearLayout linearLayout;
     private LinearLayout.LayoutParams linearLayoutParams;
 
-	// private CopyOnWriteArrayList<FeedItemCard> mNewsItems;
-    private CopyOnWriteArrayList<FeedItemsCard> mNewsItems;
-    // private FeedItemCard mNewsItem;
+    public CopyOnWriteArrayList<FeedItemsCard> mNewsItems;
     private FeedItemsCard mNewsItem;
     private CopyOnWriteArrayList<FeedItemCard> mNewsItemsCard;
 	private ViewHolder mHolder;
@@ -84,13 +81,11 @@ public class BraveNewsAdapterFeedCard extends RecyclerView.Adapter<BraveNewsAdap
         this.mActivity = activity;
         this.mNewsItems = newsItems;
         this.mBraveNewsController = braveNewsController;
-        Log.d("bn", " BraveNewsAdapterFeedCard newsItems:" + newsItems);
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        Log.d("bn", "onCreateViewHolder viewType:" + viewType);
         view = mInflater.inflate(R.layout.brave_news_row, parent, false);
         mHolder = new ViewHolder(view);
 
@@ -102,15 +97,8 @@ public class BraveNewsAdapterFeedCard extends RecyclerView.Adapter<BraveNewsAdap
         LinearLayout.LayoutParams params1;
         if (mNewsItems != null){
             mNewsItem = mNewsItems.get(position);
-            Log.d("bn", "createfeed BraveNewsAdapterFeedCard onBindViewHolder position: ------------- " + position);
-            Log.d("bn", "createfeed BraveNewsAdapterFeedCard onBindViewHolder position item:" + mNewsItems.get(position));
-            Log.d("bn", "createfeed BraveNewsAdapterFeedCard onBindViewHolder mNewsItem position: "+ position+" TYPE:" + mNewsItems.get(position).getCardType());
-            // Log.d("BN", "onBindViewHolder getItemViewType:" + holder.getItemViewType());
-            NTPUtil.showItemInfo(mNewsItems.get(position), "createfeed BraveNewsAdapterFeedCard onBindViewHolder position");
-
+            BraveNewsUtils.logFeedItem(mNewsItems.get(position), "createfeed BraveNewsAdapterFeedCard onBindViewHolder position");
             try {
-                // if (mBraveNewsController != null && mNewsItems.get(position) != null  && mNewsItems.get(position).getFeedItems() != null) {
-                
                 if (mBraveNewsController != null) {
                     new CardBuilderFeedCard(mBraveNewsController, mHolder.linearLayout, mActivity,
                             position, mNewsItems.get(position),
@@ -118,7 +106,7 @@ public class BraveNewsAdapterFeedCard extends RecyclerView.Adapter<BraveNewsAdap
                 }
                 
             } catch (Exception e) {
-                Log.d("bn", "crashinvestigation onBindViewHolder e: " + e);
+                Log.e("bn", "crashinvestigation onBindViewHolder e: " + e);
             }
         } 
     }
@@ -126,12 +114,7 @@ public class BraveNewsAdapterFeedCard extends RecyclerView.Adapter<BraveNewsAdap
     @Override
     public int getItemCount() {
         return mNewsItems.size();
-    }
-
-
-    public void setClickListener(BraveNewTabPageLayout recyclerMain) {
-        this.mClickListener = recyclerMain;
-    }
+    } 
 
     public class ViewHolderWidget extends RecyclerView.ViewHolder {
         ViewHolderWidget(View itemView) {
@@ -151,8 +134,7 @@ public class BraveNewsAdapterFeedCard extends RecyclerView.Adapter<BraveNewsAdap
 
         @Override
         public void onClick(View view) {
-            Log.d("bn", "cardclicklistener cliked on: "+getAdapterPosition());
-            if (mClickListener != null) mClickListener.onCardClick(view, getAdapterPosition());
+            
         }
     }
 
@@ -160,12 +142,4 @@ public class BraveNewsAdapterFeedCard extends RecyclerView.Adapter<BraveNewsAdap
         return mNewsItems.get(id);
     }
 
-
-    public interface RecycleItemClickListener {
-        void onCardClick(View view, int position);
-
-        void onOptInClick(View view);
-
-        void onCloseClick(View view);
-    }
 }

@@ -44,8 +44,6 @@ import android.view.MenuItem;
 import org.chromium.brave_news.mojom.Publisher;
 import org.chromium.brave_news.mojom.BraveNewsController;
 import org.chromium.chrome.browser.brave_news.BraveNewsControllerFactory;
-import org.chromium.chrome.browser.brave_news.models.NewsItem;
-import org.chromium.chrome.browser.brave_news.models.PublisherCategory;
 import org.chromium.mojo.bindings.ConnectionErrorHandler;
 import org.chromium.mojo.system.MojoException;
 import org.chromium.chrome.browser.preferences.BravePrefServiceBridge;

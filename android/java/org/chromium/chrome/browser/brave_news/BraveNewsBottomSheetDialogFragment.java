@@ -49,6 +49,12 @@ public class BraveNewsBottomSheetDialogFragment extends BottomSheetDialogFragmen
     }
 
     @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setStyle(STYLE_NORMAL, R.style. AppBottomSheetDialogTheme);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         if (getArguments() != null) {
@@ -82,7 +88,8 @@ public class BraveNewsBottomSheetDialogFragment extends BottomSheetDialogFragmen
         Button disable = view.findViewById(R.id.disable_content);
 
         title.setText(url);
-        StringBuilder disableText = new StringBuilder(R.string.brave_news_disable_content);
+        StringBuilder disableText = new StringBuilder();
+        disableText.append(getResources().getString(R.string.brave_news_disable_content));
         disableText.append(" ");
         disableText.append(publisherName);
         disable.setText(disableText);
@@ -107,8 +114,6 @@ public class BraveNewsBottomSheetDialogFragment extends BottomSheetDialogFragmen
             @Override
             public void onClick(View v) {
                 if (mBraveNewsController != null){
-                    // @UserEnabled.EnumType int type = UserEnabled.NOT_MODIFIED;
-                    Log.d("bn", "lonpressing disable mBraveNewsController:"+mBraveNewsController + " publisherId:" + publisherId);
 
                     SharedPreferencesManager.getInstance().writeBoolean(BravePreferenceKeys.BRAVE_NEWS_CHANGE_SOURCE, true);
                     mBraveNewsController.setPublisherPref(publisherId, UserEnabled.DISABLED);
