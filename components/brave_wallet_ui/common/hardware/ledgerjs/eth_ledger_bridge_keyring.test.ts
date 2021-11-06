@@ -30,7 +30,7 @@ const createLedgerKeyring = () => {
   const ledgerHardwareKeyring = new LedgerBridgeKeyring()
   ledgerHardwareKeyring.unlock = async () => {
     ledgerHardwareKeyring.app = new MockApp()
-    ledgerHardwareKeyring.deviceId_ = 'device1'
+    ledgerHardwareKeyring.deviceId = 'device1'
     return true
   }
   return ledgerHardwareKeyring
@@ -123,6 +123,6 @@ test('Sign personal message failed', () => {
   const ledgerHardwareKeyring = createLedgerKeyring()
   ledgerHardwareKeyring.app = new MockApp()
   return expect(ledgerHardwareKeyring.signPersonalMessage(
-    'm/44\'/60\'/0\'/0/0', '0x111', 'message'))
+    'm/44\'/60\'/0\'/0/0', 'message'))
     .resolves.toMatchObject({ success: false })
 })
