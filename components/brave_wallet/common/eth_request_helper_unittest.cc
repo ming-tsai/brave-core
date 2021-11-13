@@ -7,7 +7,10 @@
 #include <utility>
 #include <vector>
 
+#include "base/json/json_reader.h"
+#include "base/strings/string_number_conversions.h"
 #include "brave/components/brave_wallet/common/eth_request_helper.h"
+#include "brave/components/brave_wallet/common/eth_sign_typed_data_helper.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace brave_wallet {

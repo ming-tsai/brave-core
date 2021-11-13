@@ -251,6 +251,87 @@ bool ParsePersonalSignParams(const std::string& json,
   return true;
 }
 
+void FindAllDependencyTypes(
+    const base::Value& types,
+    base::flat_map<std::string, base::Value>* known_types,
+    const std::string& anchor_type_name) {
+  DCHECK(types.is_dict());
+  DCHECK(!anchor_type_name.empty());
+  DCHECK(known_types);
+
+  const base::Value* anchor_type =
+      types.FindKeyOfType(anchor_type_name, base::Value::Type::LIST);
+  if (!anchor_type)
+    return;
+  known_types->emplace(anchor_type_name, anchor_type->Clone());
+
+  for (const auto& field : anchor_type->GetList()) {
+    const std::string* type = field.FindStringKey("type");
+    if (type && !known_types->contains(*type)) {
+      FindAllDependencyTypes(types, known_types, *type);
+    }
+  }
+}
+
+bool ParseEthSignTypedDataParams(const std::string& json,
+                                   std::string* address,
+                                   std::string* message_out,
+                                   std::vector<uint8_t>* message_to_sign_out,
+                                   base::Value* domain_out,
+                                   SignTypedDataHelper::Version version) {
+  if (!address || !message_out || !domain_out || !message_to_sign_out)
+    return false;
+
+  auto list = GetParamsList(json);
+  if (!list || list->size() != 2)
+    return false;
+
+  const std::string* address_str = (*list)[0].GetIfString();
+  const std::string* typed_data_str = (*list)[1].GetIfString();
+  if (!address_str || !typed_data_str)
+    return false;
+
+  auto typed_data =
+      base::JSONReader::Read(*typed_data_str, base::JSON_ALLOW_TRAILING_COMMAS);
+  if (!typed_data || !typed_data->is_dict())
+    return false;
+
+  const base::Value* types = typed_data->FindKey("types");
+  if (!types)
+    return false;
+  std::unique_ptr<SignTypedDataHelper> helper =
+      SignTypedDataHelper::Create(*types, version);
+  if (!helper)
+    return false;
+
+  const std::string* primary_type = typed_data->FindStringKey("primaryType");
+  if (!primary_type)
+    return false;
+
+  const base::Value* domain = typed_data->FindKey("domain");
+  if (!domain)
+    return false;
+
+  const base::Value* message = typed_data->FindKey("message");
+  if (!message)
+    return false;
+
+  *address = *address_str;
+  if (!base::JSONWriter::WriteWithOptions(
+          *message, base::JSONWriter::OPTIONS_PRETTY_PRINT, message_out))
+    return false;
+
+  auto message_to_sign =
+      helper->GetTypedDataMessageToSign(*primary_type, *message, *domain);
+  if (!message_to_sign)
+    return false;
+  *message_to_sign_out = *message_to_sign;
+
+  *domain_out = domain->Clone();
+
+  return true;
+}
+
 bool ParseSwitchEthereumChainParams(const std::string& json,
                                     std::string* chain_id) {
   if (!chain_id)
