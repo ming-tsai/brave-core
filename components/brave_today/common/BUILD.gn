@@ -8,6 +8,8 @@ static_library("common") {
     "pref_names.h",
     "switches.cc",
     "switches.h",
+    "features.cc",
+    "feature.h",
   ]
 
   deps = [

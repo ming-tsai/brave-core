@@ -6,6 +6,7 @@
 #include "brave/common/brave_features.h"
 #include "third_party/blink/public/common/features.h"
 #include "brave/components/brave_wallet/common/features.h"
+#include "brave/components/brave_today/common/features.h"
 
 namespace chrome {
 namespace android {
@@ -16,6 +17,7 @@ const base::Feature* kBraveFeaturesExposedToJava[] = {
     &features::kBraveRewards,
     &blink::features::kForceWebContentsDarkMode,
     &brave_wallet::features::kNativeBraveWalletFeature,
+    &brave_today::features::kBraveNewsFeature,
 };
 
 const base::Feature* BraveFindFeatureExposedToJava(

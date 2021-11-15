@@ -18,6 +18,8 @@
 #include "brave/components/brave_sync/features.h"
 #include "brave/components/brave_vpn/buildflags/buildflags.h"
 #include "brave/components/brave_wallet/common/features.h"
+#include "brave/components/brave_today/common/features.h"
+#include "brave/components/brave_today/buildflags/buildflags.h"
 #include "brave/components/debounce/common/features.h"
 #include "brave/components/decentralized_dns/buildflags/buildflags.h"
 #include "brave/components/ipfs/buildflags/buildflags.h"
@@ -224,6 +226,10 @@ constexpr char kNativeBraveWalletName[] = "Enable Brave Wallet";
 constexpr char kNativeBraveWalletDescription[] =
     "Native cryptocurrency wallet support without the use of extensions";
 
+constexpr char kBraveNewsName[] = "Enable Brave News";
+constexpr char kBraveNewsDescription[] =
+    "Enable Brave News";
+
 constexpr char kCryptoWalletsForNewInstallsName[] =
     "Enable Crypto Wallets option in settings";
 constexpr char kCryptoWalletsForNewInstallsDescription[] =
@@ -315,6 +321,17 @@ constexpr char kFileSystemAccessAPIDescription[] =
      flag_descriptions::kNativeBraveWalletDescription,                       \
      kOsDesktop | flags_ui::kOsAndroid,                                      \
      FEATURE_VALUE_TYPE(brave_wallet::features::kNativeBraveWalletFeature)},
+
+#if BUILDFLAG(ENABLE_BRAVE_NEWS)
+#define BRAVE_NEWS_FEATURE_ENTRIES                                  \
+    {"brave-news",                                                  \
+     flag_descriptions::kBraveNewsName,                             \
+     flag_descriptions::kBraveNewsDescription,                      \
+     flags_ui::kOsAndroid,                                       \
+     FEATURE_VALUE_TYPE(brave_today::features::kBraveNewsFeature)},
+#else
+#define BRAVE_NEWS_FEATURE_ENTRIES
+#endif
 
 #if BUILDFLAG(ETHEREUM_REMOTE_CLIENT_ENABLED)
 #define CRYPTO_WALLETS_FEATURE_ENTRIES                                       \
@@ -452,6 +469,7 @@ constexpr char kFileSystemAccessAPIDescription[] =
     BRAVE_DECENTRALIZED_DNS_FEATURE_ENTRIES                                 \
     BRAVE_IPFS_FEATURE_ENTRIES                                              \
     BRAVE_NATIVE_WALLET_FEATURE_ENTRIES                                     \
+    BRAVE_NEWS_FEATURE_ENTRIES                                              \
     CRYPTO_WALLETS_FEATURE_ENTRIES                                          \
     BRAVE_REWARDS_GEMINI_FEATURE_ENTRIES                                    \
     BRAVE_VPN_FEATURE_ENTRIES                                               \

@@ -70,6 +70,8 @@ import org.chromium.chrome.browser.ApplicationLifetime;
 import org.chromium.chrome.browser.BraveConfig;
 import org.chromium.chrome.browser.BraveHelper;
 import org.chromium.chrome.browser.BraveRelaunchUtils;
+import org.chromium.chrome.browser.flags.ChromeFeatureList;
+import org.chromium.chrome.browser.BraveFeatureList;
 import org.chromium.chrome.browser.BraveRewardsHelper;
 import org.chromium.chrome.browser.BraveRewardsNativeWorker;
 import org.chromium.chrome.browser.BraveSyncInformers;
@@ -384,16 +386,6 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         this.newsFeedScrollPosition = newsFeedScrollPosition;
     }
 
-
-    public int getImageCreditLayoutBottom() {
-        ViewGroup imageCreditLayout = findViewById(R.id.image_credit_layout);
-        if (imageCreditLayout != null) {
-            return imageCreditLayout.getBottom();
-        }
-
-        return ConfigurationUtils.getDisplayMetrics(this).get("height");
-    }
-
     @Override
     public void onBrowsingDataCleared() {}
 
@@ -604,14 +596,13 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
             // // if it's new tab add the brave news settings bar to the layout
             if (tab != null && tab.getUrl().getSpec() != null
                     && UrlUtilities.isNTPUrl(tab.getUrl().getSpec())
-                    && BravePrefServiceBridge.getInstance().getNewsOptIn()) {
+                    && BravePrefServiceBridge.getInstance().getNewsOptIn()
+                    && ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)) {
                 inflateNewsSettingsBar();
             } else {
                 removeSetttingsBar();
             } 
         }
-
-        Log.d("BN", "lifecycle BraveActivity finishNativeInitialization");
 
         if (BraveVpnUtils.isBraveVpnFeatureEnable()) {
             ConnectivityManager connectivityManager =
@@ -666,16 +657,6 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         braveVpnCalloutDialogFragment.setCancelable(false);
         braveVpnCalloutDialogFragment.show(
                 getSupportFragmentManager(), "BraveVpnCalloutDialogFragment");
-    }
-
-    public boolean newsSettingsBarInflated;
-
-    public boolean isNewsSettingsBarInflated(){
-        return this.newsSettingsBarInflated;
-    }
-
-    public void setNewsSettingsBarInflated(boolean newsSettingsBarInflated) {
-        this.newsSettingsBarInflated = newsSettingsBarInflated;
     }
 
     public void inflateNewsSettingsBar() {

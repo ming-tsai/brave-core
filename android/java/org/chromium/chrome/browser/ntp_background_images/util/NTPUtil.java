@@ -45,6 +45,8 @@ import org.chromium.chrome.browser.BraveRewardsPanelPopup;
 import org.chromium.chrome.browser.app.BraveActivity;
 import org.chromium.chrome.browser.app.ChromeActivity;
 import org.chromium.chrome.browser.compositor.CompositorViewHolder;
+import org.chromium.chrome.browser.flags.ChromeFeatureList;
+import org.chromium.chrome.browser.BraveFeatureList;
 import org.chromium.chrome.browser.ntp_background_images.NTPBackgroundImagesBridge;
 import org.chromium.chrome.browser.ntp_background_images.RewardsBottomSheetDialogFragment;
 import org.chromium.chrome.browser.ntp_background_images.model.BackgroundImage;
@@ -110,8 +112,13 @@ public class NTPUtil {
         SharedPreferences sharedPreferences = ContextUtils.getAppSharedPreferences();
         boolean isShowOptin =
                 sharedPreferences.getBoolean(BraveNewsPreferences.PREF_SHOW_OPTIN, true);
-        if (BravePrefServiceBridge.getInstance().getNewsOptIn() && BravePrefServiceBridge.getInstance().getShowNews()) {
+        if (BravePrefServiceBridge.getInstance().getNewsOptIn() 
+                && BravePrefServiceBridge.getInstance().getShowNews()) {
             isCompensate = true;
+        }
+
+        if (!ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)){
+            isCompensate = false;
         }
        
         if (BraveActivity.getBraveActivity() != null) {
@@ -128,18 +135,24 @@ public class NTPUtil {
                 if (!isTablet) {
                     imageCreditCorrection = isLandscape
                             ? (int) (pxHeight * (isCompensate ? 0.12 : 0.88))
-                            : (int) (pxHeight * (isCompensate ? 0.46 : 0.54));
+                            : (int) (pxHeight * (isCompensate ? 0.46 : 0.59));
+                }
+                if (!ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)){
+                    imageCreditCorrection = (int) imageCreditCorrection -  (int)(pxHeight * 0.03);
                 }
             } else {
                 if (!isTablet) {
                     imageCreditCorrection = isLandscape
                             ? (int) (pxHeight * (isCompensate ? 0.02 : 0.98))
-                            : (int) (pxHeight * (isCompensate ? 0.30 : 0.70));
+                            : (int) (pxHeight * (isCompensate ? 0.30 : 0.50));
                 } else {
                     imageCreditCorrection = isLandscape
                             ? (int) (pxHeight * (isCompensate ? 0.28 : 0.72))
                             : (int) (pxHeight * (isCompensate ? 0.56 : 0.44));
                 }
+                if (!ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)){
+                    imageCreditCorrection = (int)imageCreditCorrection - (int)(pxHeight * 0.09);
+                }                
             }
         }
 
@@ -158,7 +171,7 @@ public class NTPUtil {
         LinearLayout parentLayout = (LinearLayout)view.findViewById(R.id.parent_layout);
         CompositorViewHolder compositorView = view.findViewById(R.id.compositor_view_holder);
         ViewGroup imageCreditLayout = view.findViewById(R.id.image_credit_layout);
-        ViewGroup optinLayout = view.findViewById(R.id.optin_layout_id);
+
         ViewGroup mainLayout = view.findViewById(R.id.ntp_main_layout);
 
         ImageView sponsoredLogo = (ImageView)view.findViewById(R.id.sponsored_logo);
@@ -166,8 +179,6 @@ public class NTPUtil {
 
         parentLayout.removeView(mainLayout);
         parentLayout.addView(mainLayout);
-
-        parentLayout.setOrientation(LinearLayout.VERTICAL);
 
         boolean isTablet = DeviceFormFactor.isNonMultiDisplayContextOnTablet(context);
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
@@ -190,24 +201,36 @@ public class NTPUtil {
         LinearLayout.LayoutParams imageCreditLayoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
-        int topMargin = correctImageCreditLayoutTopPosition(ntpImage);
+            int topMargin = correctImageCreditLayoutTopPosition(ntpImage);
 
-        imageCreditLayoutParams.setMargins(0, topMargin, 0, 50);
+            imageCreditLayoutParams.setMargins(0, topMargin, 0, 50);
+
+        if (ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)){
+            ViewGroup optinLayout = view.findViewById(R.id.optin_layout_id);
+            LinearLayout.LayoutParams optinLayoutParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            optinLayoutParams.setMargins(30, imageCreditLayout.getBottom(), 30, 500);
+            optinLayout.setLayoutParams(optinLayoutParams);
+
+            View feedSpinner = (View) view.findViewById(R.id.feed_spinner);
+            FrameLayout.LayoutParams feedSpinnerParams =
+                    (FrameLayout.LayoutParams) feedSpinner.getLayoutParams();
+            feedSpinnerParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            feedSpinnerParams.setMargins(0, 0, 0, dpToPx(context, 35));
+            feedSpinner.setLayoutParams(feedSpinnerParams);
+
+            layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
+
+        } else {
+
+            mainLayout.removeView(imageCreditLayout);
+            mainLayout.addView(imageCreditLayout);
+            layoutParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            layoutParams.setMargins(0, 0, 0, dpToPx(context, 5));
+        }
+        parentLayout.setOrientation(LinearLayout.VERTICAL);
+
         imageCreditLayout.setLayoutParams(imageCreditLayoutParams);
-
-        LinearLayout.LayoutParams optinLayoutParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        optinLayoutParams.setMargins(30, imageCreditLayout.getBottom(), 30, 500);
-        optinLayout.setLayoutParams(optinLayoutParams);
-
-        View feedSpinner = (View) view.findViewById(R.id.feed_spinner);
-        FrameLayout.LayoutParams feedSpinnerParams =
-                (FrameLayout.LayoutParams) feedSpinner.getLayoutParams();
-        feedSpinnerParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        feedSpinnerParams.setMargins(0, 0, 0, dpToPx(context, 35));
-        feedSpinner.setLayoutParams(feedSpinnerParams);
-
-        layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
         sponsoredLogo.setLayoutParams(layoutParams);
     }
 
