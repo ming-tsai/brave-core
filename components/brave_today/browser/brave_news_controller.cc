@@ -32,7 +32,6 @@
 #include "components/prefs/scoped_user_pref_update.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "services/network/public/cpp/simple_url_loader.h"
-#include <android/log.h>
 
 namespace brave_news {
 
@@ -187,15 +186,12 @@ void BraveNewsController::GetDisplayAd(GetDisplayAdCallback callback) {
   auto on_ad_received = base::BindOnce(
       [](GetDisplayAdCallback callback, const bool success,
          const std::string& dimensions, const base::DictionaryValue& ad_data) {
-        __android_log_write(ANDROID_LOG_VERBOSE, "bn", "GetDisplayAd DisplayAd: foobar");
         if (!success) {
           VLOG(1) << "GetDisplayAd: no ad";
-          __android_log_write(ANDROID_LOG_VERBOSE, "bn", "GetDisplayAd DisplayAd: no ad");
           std::move(callback).Run(nullptr);
           return;
         }
         VLOG(1) << "GetDisplayAd: GOT ad";
-        __android_log_write(ANDROID_LOG_VERBOSE, "bn", "GetDisplayAd DisplayAd: got ad");
         // Convert to our mojom entity.
         // TODO(petemill): brave_ads seems to use mojom, perhaps we can receive
         // and send to callback the actual typed mojom struct from brave_ads?

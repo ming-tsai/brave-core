@@ -326,7 +326,6 @@ if (enable_brave_referrals) {
   brave_java_sources += [ "../../brave/android/java/org/chromium/chrome/browser/util/BraveReferrer.java" ]
 }
 
-
 if (brave_news_enabled) {
   brave_java_sources += [ "../../brave/android/java/org/chromium/chrome/browser/brave_news/BraveNewsControllerFactory.java" ]
 }

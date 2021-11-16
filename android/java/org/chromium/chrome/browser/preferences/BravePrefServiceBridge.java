@@ -361,6 +361,5 @@ public class BravePrefServiceBridge {
 
         void setShowNews(boolean value);
         boolean getShowNews();
-
     }
 }

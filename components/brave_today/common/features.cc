@@ -6,19 +6,18 @@
 #include "brave/components/brave_today/common/features.h"
 
 #include "base/feature_list.h"
-#include "brave/components/brave_today/buildflags/buildflags.h"
 
 namespace brave_today {
 namespace features {
 
-const base::Feature kBraveNewsFeature{
+const base::Feature kBraveNewsFeature {
   "BraveNews",
 
-#if BUILDFLAG(ENABLE_BRAVE_NEWS) && defined(OS_ANDROID)
+#if (!defined(OS_ANDROID) || defined(OS_ANDROID) && defined(OFFICIAL_BUILD))
       base::FEATURE_ENABLED_BY_DEFAULT
 #else
       base::FEATURE_DISABLED_BY_DEFAULT
-#endif      
+#endif
 };
 
 }  // namespace features

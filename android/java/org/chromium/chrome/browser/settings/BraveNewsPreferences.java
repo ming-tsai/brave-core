@@ -9,7 +9,11 @@ package org.chromium.chrome.browser.settings;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -26,39 +30,30 @@ import androidx.preference.SwitchPreference;
 
 import org.chromium.base.ContextUtils;
 import org.chromium.base.Log;
+import org.chromium.brave_news.mojom.BraveNewsController;
+import org.chromium.brave_news.mojom.Publisher;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.BraveLaunchIntentDispatcher;
+import org.chromium.chrome.browser.brave_news.BraveNewsControllerFactory;
+import org.chromium.chrome.browser.preferences.BravePrefServiceBridge;
 import org.chromium.chrome.browser.preferences.BravePreferenceKeys;
 import org.chromium.chrome.browser.settings.BraveAddNewsSources;
 import org.chromium.chrome.browser.settings.BravePreferenceFragment;
+import org.chromium.chrome.browser.settings.SearchPreference;
 import org.chromium.components.browser_ui.settings.ChromeBasePreference;
 import org.chromium.components.browser_ui.settings.ChromeSwitchPreference;
-import org.chromium.chrome.browser.settings.SearchPreference;
 import org.chromium.components.browser_ui.settings.SettingsUtils;
-import android.widget.Button;
-
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-
-import org.chromium.brave_news.mojom.Publisher;
-import org.chromium.brave_news.mojom.BraveNewsController;
-import org.chromium.chrome.browser.brave_news.BraveNewsControllerFactory;
 import org.chromium.mojo.bindings.ConnectionErrorHandler;
 import org.chromium.mojo.system.MojoException;
-import org.chromium.chrome.browser.preferences.BravePrefServiceBridge;
 
-import java.util.Map;
-
-import java.util.HashMap;
-
-import java.util.TreeMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
-public class BraveNewsPreferences
-        extends BravePreferenceFragment implements Preference.OnPreferenceChangeListener,
-        ConnectionErrorHandler {
+public class BraveNewsPreferences extends BravePreferenceFragment
+        implements Preference.OnPreferenceChangeListener, ConnectionErrorHandler {
     public static final String PREF_TURN_ON_NEWS = "kBraveTodayOptedIn";
     public static final String PREF_SHOW_NEWS = "kNewTabPageShowToday";
     public static final String PREF_SHOW_OPTIN = "show_optin";
@@ -71,10 +66,10 @@ public class BraveNewsPreferences
     private EditText mEditText;
     private PreferenceScreen mainScreen;
     private PreferenceManager preferenceManager;
-    private TreeMap <String, List<Publisher>> categsPublishers;
+    private TreeMap<String, List<Publisher>> categsPublishers;
 
     private final HashMap<String, Preference> mRemovedPreferences = new HashMap<>();
-    private BraveNewsController mBraveNewsController; 
+    private BraveNewsController mBraveNewsController;
     private PreferenceFragmentCompat settingsFragment;
 
     public static int getPreferenceSummary() {
@@ -83,8 +78,6 @@ public class BraveNewsPreferences
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, String rootKey) {
-
-        Log.d("bn", "getfeedprefs onCreatePreferences");
         SettingsUtils.addPreferencesFromResource(this, R.xml.brave_news_preferences);
         InitBraveNewsController();
         turnOnNews = (ChromeSwitchPreference) findPreference(PREF_TURN_ON_NEWS);
@@ -98,10 +91,11 @@ public class BraveNewsPreferences
         mBraveNewsController.getPublishers((publishers) -> {
             List<Publisher> allPublishers = new ArrayList<>();
             List<Publisher> categoryPublishers = new ArrayList<>();
-            for (Map.Entry<String,Publisher> entry : publishers.entrySet()) {
+            for (Map.Entry<String, Publisher> entry : publishers.entrySet()) {
                 String key = entry.getKey();
                 Publisher publisher = entry.getValue();
-                // categsPublishers.computeIfAbsent(publisher.categoryName, k ->new ArrayList<>()).add(publisher);
+                // categsPublishers.computeIfAbsent(publisher.categoryName, k ->new
+                // ArrayList<>()).add(publisher);
                 categoryPublishers.add(publisher);
                 categsPublishers.put(publisher.categoryName, categoryPublishers);
             }
@@ -110,14 +104,13 @@ public class BraveNewsPreferences
         });
     }
 
-
-    private void addCategs(TreeMap <String, List<Publisher>> publisherCategories){
-
-        for(Map.Entry<String,List<Publisher>> map : publisherCategories.entrySet()){
+    private void addCategs(TreeMap<String, List<Publisher>> publisherCategories) {
+        for (Map.Entry<String, List<Publisher>> map : publisherCategories.entrySet()) {
             String category = map.getKey();
             List<Publisher> publishers = map.getValue();
 
-            ChromeBasePreference source = new ChromeBasePreference(ContextUtils.getApplicationContext());
+            ChromeBasePreference source =
+                    new ChromeBasePreference(ContextUtils.getApplicationContext());
             source.setTitle(category);
             source.setKey(category);
             Bundle prefExtras = source.getExtras();
@@ -129,6 +122,9 @@ public class BraveNewsPreferences
 
     @Override
     public void onConnectionError(MojoException e) {
+        if (mBraveNewsController != null) {
+            mBraveNewsController.close();
+        }
         mBraveNewsController = null;
         InitBraveNewsController();
     }
@@ -144,15 +140,13 @@ public class BraveNewsPreferences
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
-        Log.d("bn", "getfeedprefs onCreate");
         getActivity().setTitle(R.string.brave_news_title);
 
         preferenceManager = getPreferenceManager();
         mainScreen = preferenceManager.getPreferenceScreen();
 
-        boolean isNewsOn =  BravePrefServiceBridge.getInstance().getNewsOptIn();
+        boolean isNewsOn = BravePrefServiceBridge.getInstance().getNewsOptIn();
 
         if (!isNewsOn) {
             turnOnNews.setChecked(false);
@@ -161,7 +155,7 @@ public class BraveNewsPreferences
             turnOnNews.setChecked(true);
             turnOnNews.setVisible(false);
             showNews.setVisible(true);
-            if ( BravePrefServiceBridge.getInstance().getShowNews()) {
+            if (BravePrefServiceBridge.getInstance().getShowNews()) {
                 showNews.setChecked(true);
             } else {
                 showNews.setChecked(false);
@@ -170,28 +164,11 @@ public class BraveNewsPreferences
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-         Log.d("bn", "prefclose in bravenews");
-        if (item.getItemId() == R.id.close_menu_id) {
-                        Log.d("bn", "prefclose in menu bravenews");
-
-            // Intent intent = new Intent(this, ChromeTabbedActivity.class);
-            // intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            // startActivity(intent);
-            
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         String key = preference.getKey();
-        Log.d("BN", "pref change key:" + key);
         if (PREF_TURN_ON_NEWS.equals(key)) {
             BravePrefServiceBridge.getInstance().setNewsOptIn((boolean) newValue);
             if ((boolean) newValue) {
-                Log.d("BN", "pref true add stuff");
                 showNews.setVisible(true);
                 showNews.setChecked(true);
                 BravePrefServiceBridge.getInstance().setShowNews(true);
@@ -199,8 +176,8 @@ public class BraveNewsPreferences
                 showNews.setVisible(false);
             }
         } else if (PREF_SHOW_NEWS.equals(key)) {
-            BravePrefServiceBridge.getInstance().setShowNews( (boolean) newValue);
-        } 
+            BravePrefServiceBridge.getInstance().setShowNews((boolean) newValue);
+        }
         return true;
     }
 
@@ -209,6 +186,14 @@ public class BraveNewsPreferences
         if (preference != null) {
             getPreferenceScreen().removePreference(preference);
             mRemovedPreferences.put(preference.getKey(), preference);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mBraveNewsController != null) {
+            mBraveNewsController.close();
         }
     }
 

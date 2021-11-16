@@ -348,10 +348,10 @@ void AdsImpl::OnPromotedContentAdEvent(
 
 void AdsImpl::GetInlineContentAd(const std::string& dimensions,
                                  GetInlineContentAdCallback callback) {
- if (!IsInitialized()) {
-   callback(/* success */ false, dimensions, {});
-   return;
- }
+  if (!IsInitialized()) {
+    callback(/* success */ false, dimensions, {});
+    return;
+  }
 
   inline_content_ad_serving_->MaybeServeAd(
       dimensions, [=](const bool success, const std::string& dimensions,

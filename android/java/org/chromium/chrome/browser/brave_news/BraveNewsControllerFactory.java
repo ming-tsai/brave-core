@@ -5,7 +5,6 @@
 
 package org.chromium.chrome.browser.brave_news;
 
-import org.chromium.base.annotations.CalledByNative;
 import org.chromium.base.annotations.JNINamespace;
 import org.chromium.base.annotations.NativeMethods;
 import org.chromium.brave_news.mojom.BraveNewsController;
@@ -18,24 +17,23 @@ import org.chromium.mojo.system.impl.CoreImpl;
 
 @JNINamespace("chrome::android")
 public class BraveNewsControllerFactory {
-    private static final Object lock = new Object();
-    private static BraveNewsControllerFactory instance;
+    private static final Object sLock = new Object();
+    private static BraveNewsControllerFactory sInstance;
 
     public static BraveNewsControllerFactory getInstance() {
-        synchronized (lock) {
-            if (instance == null) {
-                instance = new BraveNewsControllerFactory();
+        synchronized (sLock) {
+            if (sInstance == null) {
+                sInstance = new BraveNewsControllerFactory();
             }
         }
-        return instance;
+        return sInstance;
     }
 
     private BraveNewsControllerFactory() {}
 
     public BraveNewsController getBraveNewsController(
             ConnectionErrorHandler connectionErrorHandler) {
-        int nativeHandle =
-                BraveNewsControllerFactoryJni.get().getInterfaceToBraveNewsController();
+        int nativeHandle = BraveNewsControllerFactoryJni.get().getInterfaceToBraveNewsController();
         MessagePipeHandle handle = wrapNativeHandle(nativeHandle);
         BraveNewsController braveNewsController =
                 BraveNewsController.MANAGER.attachProxy(handle, 0);
@@ -44,7 +42,7 @@ public class BraveNewsControllerFactory {
 
         return braveNewsController;
     }
-    
+
     private MessagePipeHandle wrapNativeHandle(int nativeHandle) {
         return CoreImpl.getInstance().acquireNativeHandle(nativeHandle).toMessagePipeHandle();
     }

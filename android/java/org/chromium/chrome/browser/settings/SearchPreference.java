@@ -17,8 +17,6 @@ import androidx.preference.PreferenceViewHolder;
 import org.chromium.chrome.R;
 
 public class SearchPreference extends Preference {
-
-
     public SearchPreference(Context context) {
         super(context);
         setLayoutResource(R.layout.custom_layout_preference);
@@ -30,8 +28,7 @@ public class SearchPreference extends Preference {
         super.onBindViewHolder(holder);
         SearchView searchView = (SearchView) holder.findViewById(R.id.search_preference);
 
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){
-
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
                 getOnPreferenceChangeListener().onPreferenceChange(SearchPreference.this, s);
@@ -44,6 +41,5 @@ public class SearchPreference extends Preference {
                 return false;
             }
         });
-
     }
 }

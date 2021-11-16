@@ -5,7 +5,6 @@ import("//build/config/features.gni")
 assert(brave_news_enabled)
 
 static_library("browser") {
-
   sources = [
     "brave_news_controller.cc",
     "brave_news_controller.h",

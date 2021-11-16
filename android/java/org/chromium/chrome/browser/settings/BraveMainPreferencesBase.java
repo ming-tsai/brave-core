@@ -38,8 +38,6 @@ import org.chromium.components.browser_ui.settings.ChromeBasePreference;
 import org.chromium.components.browser_ui.settings.ChromeSwitchPreference;
 import org.chromium.components.browser_ui.settings.SettingsUtils;
 import org.chromium.ui.base.DeviceFormFactor;
-import org.chromium.chrome.browser.flags.ChromeFeatureList;
-import org.chromium.chrome.browser.BraveFeatureList;
 
 import java.util.HashMap;
 
@@ -136,7 +134,7 @@ public class BraveMainPreferencesBase
         removePreferenceIfPresent(PREF_ADVANCED_SECTION);
         removePreferenceIfPresent(PREF_PRIVACY);
         removePreferenceIfPresent(PREF_BRAVE_VPN_CALLOUT);
-        if (!ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)){
+        if (!ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)) {
             removePreferenceIfPresent(PREF_BRAVE_NEWS);
         }
         updateSearchEnginePreference();

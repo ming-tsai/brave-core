@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class FeedItemsCard {
-
     private List<FeedItemCard> feedItems;
     private int cardType;
     private byte[] imageByte;
@@ -24,7 +23,6 @@ public class FeedItemsCard {
     public FeedItemsCard() {
         this.viewStatSent = false;
     }
-
 
     public List<FeedItemCard> getFeedItems() {
         return feedItems;
@@ -76,11 +74,8 @@ public class FeedItemsCard {
 
     @Override
     public String toString() {
-        return "FeedItemsCard{" +
-                "feedItems=" + feedItems +
-                ", cardType=" + cardType +
-                ", displayAd=" + displayAd +
-                ", imageByte=" + Arrays.toString(imageByte) +
-                '}';
+        return "FeedItemsCard{"
+                + "feedItems=" + feedItems + ", cardType=" + cardType + ", displayAd=" + displayAd
+                + ", imageByte=" + Arrays.toString(imageByte) + '}';
     }
 }

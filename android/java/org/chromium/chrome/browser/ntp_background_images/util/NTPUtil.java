@@ -37,16 +37,24 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.chromium.base.ContextUtils;
 import org.chromium.base.Log;
+import org.chromium.brave_news.mojom.Article;
+import org.chromium.brave_news.mojom.Deal;
+import org.chromium.brave_news.mojom.DisplayAd;
+import org.chromium.brave_news.mojom.FeedItem;
+import org.chromium.brave_news.mojom.FeedItemMetadata;
+import org.chromium.brave_news.mojom.PromotedArticle;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.BraveAdsNativeHelper;
+import org.chromium.chrome.browser.BraveFeatureList;
 import org.chromium.chrome.browser.BraveRewardsHelper;
 import org.chromium.chrome.browser.BraveRewardsNativeWorker;
 import org.chromium.chrome.browser.BraveRewardsPanelPopup;
 import org.chromium.chrome.browser.app.BraveActivity;
 import org.chromium.chrome.browser.app.ChromeActivity;
+import org.chromium.chrome.browser.brave_news.models.FeedItemCard;
+import org.chromium.chrome.browser.brave_news.models.FeedItemsCard;
 import org.chromium.chrome.browser.compositor.CompositorViewHolder;
 import org.chromium.chrome.browser.flags.ChromeFeatureList;
-import org.chromium.chrome.browser.BraveFeatureList;
 import org.chromium.chrome.browser.ntp_background_images.NTPBackgroundImagesBridge;
 import org.chromium.chrome.browser.ntp_background_images.RewardsBottomSheetDialogFragment;
 import org.chromium.chrome.browser.ntp_background_images.model.BackgroundImage;
@@ -55,7 +63,7 @@ import org.chromium.chrome.browser.ntp_background_images.model.SponsoredTab;
 import org.chromium.chrome.browser.ntp_background_images.model.Wallpaper;
 import org.chromium.chrome.browser.ntp_background_images.util.SponsoredImageUtil;
 import org.chromium.chrome.browser.preferences.BravePref;
-import org.chromium.chrome.browser.preferences.BravePreferenceKeys;
+import org.chromium.chrome.browser.preferences.BravePrefServiceBridge;
 import org.chromium.chrome.browser.preferences.SharedPreferencesManager;
 import org.chromium.chrome.browser.profiles.Profile;
 import org.chromium.chrome.browser.settings.BackgroundImagesPreferences;
@@ -67,34 +75,25 @@ import org.chromium.chrome.browser.util.PackageUtils;
 import org.chromium.components.user_prefs.UserPrefs;
 import org.chromium.content_public.browser.LoadUrlParams;
 import org.chromium.ui.base.DeviceFormFactor;
-import org.chromium.chrome.browser.brave_news.models.FeedItemCard;
-import org.chromium.chrome.browser.brave_news.models.FeedItemsCard;
-import org.chromium.brave_news.mojom.FeedItem;
-import org.chromium.brave_news.mojom.FeedItemMetadata;
-import org.chromium.brave_news.mojom.PromotedArticle;
-import org.chromium.brave_news.mojom.Deal;
-import org.chromium.brave_news.mojom.Article;
-import org.chromium.brave_news.mojom.DisplayAd;
-import org.chromium.chrome.browser.preferences.BravePrefServiceBridge;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Arrays;
 
 public class NTPUtil {
     private static final int BOTTOM_TOOLBAR_HEIGHT = 56;
     private static final String REMOVED_SITES = "removed_sites";
     private static DisplayAd currentDisplayAd;
 
-    public static void setCurrentDisplayAd(DisplayAd displayAd){
+    public static void setCurrentDisplayAd(DisplayAd displayAd) {
         currentDisplayAd = displayAd;
     }
 
-    public static DisplayAd getCurrentDisplayAd(){
+    public static DisplayAd getCurrentDisplayAd() {
         return currentDisplayAd;
     }
 
@@ -104,23 +103,19 @@ public class NTPUtil {
     public static void turnOnAds() {
         BraveAdsNativeHelper.nativeSetAdsEnabled(Profile.getLastUsedRegularProfile());
         BraveRewardsNativeWorker.getInstance().SetAutoContributeEnabled(true);
-    } 
+    }
 
     public static int correctImageCreditLayoutTopPosition(NTPImage ntpImage) {
         int imageCreditCorrection = 0;
         boolean isCompensate = false;
-        SharedPreferences sharedPreferences = ContextUtils.getAppSharedPreferences();
-        boolean isShowOptin =
-                sharedPreferences.getBoolean(BraveNewsPreferences.PREF_SHOW_OPTIN, true);
-        if (BravePrefServiceBridge.getInstance().getNewsOptIn() 
-                && BravePrefServiceBridge.getInstance().getShowNews()) {
-            isCompensate = true;
+
+        if (ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)) {
+            if (BravePrefServiceBridge.getInstance().getNewsOptIn()
+                    && BravePrefServiceBridge.getInstance().getShowNews()) {
+                isCompensate = true;
+            }
         }
 
-        if (!ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)){
-            isCompensate = false;
-        }
-       
         if (BraveActivity.getBraveActivity() != null) {
             BraveActivity activity = BraveActivity.getBraveActivity();
 
@@ -137,8 +132,8 @@ public class NTPUtil {
                             ? (int) (pxHeight * (isCompensate ? 0.12 : 0.88))
                             : (int) (pxHeight * (isCompensate ? 0.46 : 0.59));
                 }
-                if (!ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)){
-                    imageCreditCorrection = (int) imageCreditCorrection -  (int)(pxHeight * 0.03);
+                if (!ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)) {
+                    imageCreditCorrection = (int) imageCreditCorrection - (int) (pxHeight * 0.04);
                 }
             } else {
                 if (!isTablet) {
@@ -150,9 +145,9 @@ public class NTPUtil {
                             ? (int) (pxHeight * (isCompensate ? 0.28 : 0.72))
                             : (int) (pxHeight * (isCompensate ? 0.56 : 0.44));
                 }
-                if (!ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)){
-                    imageCreditCorrection = (int)imageCreditCorrection - (int)(pxHeight * 0.09);
-                }                
+                if (!ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)) {
+                    imageCreditCorrection = (int) imageCreditCorrection - (int) (pxHeight * 0.12);
+                }
             }
         }
 
@@ -161,13 +156,6 @@ public class NTPUtil {
 
     public static void updateOrientedUI(
             Context context, ViewGroup view, Point size, NTPImage ntpImage) {
-
-        SharedPreferences sharedPreferences = ContextUtils.getAppSharedPreferences();
-        boolean isNewsOn =
-                sharedPreferences.getBoolean(BraveNewsPreferences.PREF_TURN_ON_NEWS, false);
-        boolean isShowNewsOn =
-                sharedPreferences.getBoolean(BraveNewsPreferences.PREF_SHOW_NEWS, false);
-
         LinearLayout parentLayout = (LinearLayout)view.findViewById(R.id.parent_layout);
         CompositorViewHolder compositorView = view.findViewById(R.id.compositor_view_holder);
         ViewGroup imageCreditLayout = view.findViewById(R.id.image_credit_layout);
@@ -201,11 +189,11 @@ public class NTPUtil {
         LinearLayout.LayoutParams imageCreditLayoutParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
-            int topMargin = correctImageCreditLayoutTopPosition(ntpImage);
+        int topMargin = correctImageCreditLayoutTopPosition(ntpImage);
 
-            imageCreditLayoutParams.setMargins(0, topMargin, 0, 50);
+        imageCreditLayoutParams.setMargins(0, topMargin, 0, 50);
 
-        if (ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)){
+        if (ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)) {
             ViewGroup optinLayout = view.findViewById(R.id.optin_layout_id);
             LinearLayout.LayoutParams optinLayoutParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -222,7 +210,6 @@ public class NTPUtil {
             layoutParams.gravity = Gravity.CENTER_HORIZONTAL;
 
         } else {
-
             mainLayout.removeView(imageCreditLayout);
             mainLayout.addView(imageCreditLayout);
             layoutParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;

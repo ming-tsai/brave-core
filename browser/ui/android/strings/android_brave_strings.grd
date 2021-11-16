@@ -256,7 +256,10 @@ This file contains all "about" strings.  It is set to NOT be translated, in tran
         Open in New Private Tab
       </message>
       <message name="IDS_BRAVE_NEWS_DISABLE_CONTENT" desc="Text for disable content option for the long press on title action">
-        Disable content from
+        Disable content from <ph name="PUBLISHER">%1$s</ph>
+      </message>
+      <message name="IDS_BRAVE_NEWS_DISABLED_CONTENT" desc="Text for disabled publisher notification">
+        <ph name="PUBLISHER">%1$s</ph> disabled
       </message>
       <message name="IDS_BRAVE_NEWS_LOAD_NEW_CONTENT" desc="Text for load new content button for Brave news">
         Load new content
@@ -269,9 +272,6 @@ This file contains all "about" strings.  It is set to NOT be translated, in tran
       </message>
       <message name="IDS_NEWS_TURN_ON_BUTTON" desc="Text for turn on button">
         Turn on Brave News
-      </message>
-      <message name="IDS_NEWS_TURN_ON_TEXT" desc="Text for turn on button text">
-        Brave News is ad-supported with completely private and anonymized ...
       </message>
 <!--   // for RSS
       <message name="IDS_NEWS_YOUR_SOURCES_SECTION" desc="Text for custom sources section">

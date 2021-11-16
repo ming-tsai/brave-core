@@ -4,9 +4,9 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "brave/common/brave_features.h"
-#include "third_party/blink/public/common/features.h"
-#include "brave/components/brave_wallet/common/features.h"
 #include "brave/components/brave_today/common/features.h"
+#include "brave/components/brave_wallet/common/features.h"
+#include "third_party/blink/public/common/features.h"
 
 namespace chrome {
 namespace android {

@@ -17,13 +17,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -68,10 +67,9 @@ import org.chromium.base.task.TaskTraits;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.ApplicationLifetime;
 import org.chromium.chrome.browser.BraveConfig;
+import org.chromium.chrome.browser.BraveFeatureList;
 import org.chromium.chrome.browser.BraveHelper;
 import org.chromium.chrome.browser.BraveRelaunchUtils;
-import org.chromium.chrome.browser.flags.ChromeFeatureList;
-import org.chromium.chrome.browser.BraveFeatureList;
 import org.chromium.chrome.browser.BraveRewardsHelper;
 import org.chromium.chrome.browser.BraveRewardsNativeWorker;
 import org.chromium.chrome.browser.BraveSyncInformers;
@@ -82,6 +80,7 @@ import org.chromium.chrome.browser.LaunchIntentDispatcher;
 import org.chromium.chrome.browser.SetDefaultBrowserActivity;
 import org.chromium.chrome.browser.bookmarks.BookmarkBridge;
 import org.chromium.chrome.browser.bookmarks.BookmarkModel;
+import org.chromium.chrome.browser.brave_news.models.FeedItemsCard;
 import org.chromium.chrome.browser.brave_stats.BraveStatsUtil;
 import org.chromium.chrome.browser.browsing_data.BrowsingDataBridge;
 import org.chromium.chrome.browser.browsing_data.BrowsingDataType;
@@ -94,14 +93,15 @@ import org.chromium.chrome.browser.compositor.layouts.LayoutManagerImpl;
 import org.chromium.chrome.browser.compositor.layouts.phone.StackLayout;
 import org.chromium.chrome.browser.crypto_wallet.activities.BraveWalletActivity;
 import org.chromium.chrome.browser.dependency_injection.ChromeActivityComponent;
+import org.chromium.chrome.browser.flags.ChromeFeatureList;
 import org.chromium.chrome.browser.flags.ChromeSwitches;
 import org.chromium.chrome.browser.fullscreen.BrowserControlsManager;
 import org.chromium.chrome.browser.informers.BraveAndroidSyncDisabledInformer;
 import org.chromium.chrome.browser.notifications.BraveSetDefaultBrowserNotificationService;
 import org.chromium.chrome.browser.notifications.retention.RetentionNotificationUtil;
 import org.chromium.chrome.browser.ntp.NewTabPage;
-import org.chromium.chrome.browser.onboarding.BraveTalkOptInPopupListener;
 import org.chromium.chrome.browser.ntp_background_images.util.NewTabPageListener;
+import org.chromium.chrome.browser.onboarding.BraveTalkOptInPopupListener;
 import org.chromium.chrome.browser.onboarding.OnboardingActivity;
 import org.chromium.chrome.browser.onboarding.OnboardingPrefManager;
 import org.chromium.chrome.browser.onboarding.v2.HighlightDialogFragment;
@@ -156,7 +156,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import org.chromium.chrome.browser.brave_news.models.FeedItemsCard;
 
 /**
  * Brave's extension for ChromeActivity
@@ -209,14 +208,13 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
     private boolean mIsVerification;
     public CompositorViewHolder compositorView;
     public View inflatedSettingsBarLayout;
-    public String test;
 
     @SuppressLint("VisibleForTests")
     public BraveActivity() {
         // Disable key checker to avoid asserts on Brave keys in debug
         SharedPreferencesManager.getInstance().disableKeyCheckerForTesting();
     }
-    
+
     @Override
     public void onResumeWithNative() {
         super.onResumeWithNative();
@@ -482,25 +480,6 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         if (RateUtils.getInstance(this).shouldShowRateDialog())
             showBraveRateDialog();
 
-        int visitedNewsCardsCount = SharedPreferencesManager.getInstance().readInt(
-                BravePreferenceKeys.BRAVE_NEWS_CARDS_VISITED);
-
-        // for Brave Newsa initialize the no. of cards to 0
-        SharedPreferencesManager.getInstance().writeInt(
-                BravePreferenceKeys.BRAVE_NEWS_CARDS_VISITED, 0);
-        SharedPreferencesManager.getInstance().writeInt(
-                BravePreferenceKeys.BRAVE_NEWS_CARDS_VIEWED, 0);
-
-        SharedPreferencesManager.getInstance().writeInt(
-                BravePreferenceKeys.BRAVE_NEWS_PROMOTION_CARDS_VISITED, 0);
-        SharedPreferencesManager.getInstance().writeInt(
-                BravePreferenceKeys.BRAVE_NEWS_PROMOTION_CARDS_VIEWED, 0);
-
-        SharedPreferencesManager.getInstance().writeInt(
-                BravePreferenceKeys.BRAVE_NEWS_DISPLAYAD_CARDS_VISITED, 0);
-        SharedPreferencesManager.getInstance().writeInt(
-                BravePreferenceKeys.BRAVE_NEWS_DISPLAYAD_CARDS_VIEWED, 0);
-
         // TODO commenting out below code as we may use it in next release
 
         // if (PackageUtils.isFirstInstall(this)
@@ -591,17 +570,19 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         checkFingerPrintingOnUpgrade();
         compositorView = null;
         inflatedSettingsBarLayout = null;
-        Tab tab = getActivityTab();
-        if (tab != null){
-            // // if it's new tab add the brave news settings bar to the layout
-            if (tab != null && tab.getUrl().getSpec() != null
-                    && UrlUtilities.isNTPUrl(tab.getUrl().getSpec())
-                    && BravePrefServiceBridge.getInstance().getNewsOptIn()
-                    && ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)) {
-                inflateNewsSettingsBar();
-            } else {
-                removeSetttingsBar();
-            } 
+
+        if (ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_NEWS)) {
+            Tab tab = getActivityTab();
+            if (tab != null) {
+                // if it's new tab add the brave news settings bar to the layout
+                if (tab != null && tab.getUrl().getSpec() != null
+                        && UrlUtilities.isNTPUrl(tab.getUrl().getSpec())
+                        && BravePrefServiceBridge.getInstance().getNewsOptIn()) {
+                    inflateNewsSettingsBar();
+                } else {
+                    removeSettingsBar();
+                }
+            }
         }
 
         if (BraveVpnUtils.isBraveVpnFeatureEnable()) {
@@ -666,7 +647,7 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         if (findViewById(R.id.news_settings_bar) != null) {
             return;
         }
-        if (compositorView != null && controlContainer != null){
+        if (compositorView != null && controlContainer != null) {
             int[] coords = {0, 0};
             controlContainer.getLocationOnScreen(coords);
             int absoluteTop = coords[1];
@@ -674,8 +655,10 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
 
             LayoutInflater inflater = LayoutInflater.from(this);
             // inflate the settings bar layout
-            View inflatedSettingsBarLayout = inflater.inflate(R.layout.brave_news_settings_bar_layout, null);
-            RelativeLayout newContentButtonLayout = (RelativeLayout) inflater.inflate(R.layout.brave_news_load_new_content, null);
+            View inflatedSettingsBarLayout =
+                    inflater.inflate(R.layout.brave_news_settings_bar_layout, null);
+            RelativeLayout newContentButtonLayout =
+                    (RelativeLayout) inflater.inflate(R.layout.brave_news_load_new_content, null);
             // add the bar to the layout stack
             compositorView.addView(inflatedSettingsBarLayout, 2);
             compositorView.addView(newContentButtonLayout, 3);
@@ -683,8 +666,8 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
             FrameLayout.LayoutParams inflatedLayoutParams =
                     new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 100);
 
-            FrameLayout.LayoutParams newContentButtonLayoutParams =
-                    new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+            FrameLayout.LayoutParams newContentButtonLayoutParams = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
 
             // position bellow the control_container element (nevigation bar) with 25dp compensation
             inflatedLayoutParams.setMargins(0, controlContainer.getBottom() - 5, 0, 0);
@@ -697,15 +680,15 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
             inflatedSettingsBarLayout.setVisibility(View.VISIBLE);
 
             compositorView.invalidate();
-        } 
+        }
     }
 
-    public void removeSetttingsBar() {
+    public void removeSettingsBar() {
         CompositorViewHolder compositorView = findViewById(R.id.compositor_view_holder);
 
         if (compositorView != null) {
             View settingsBar = compositorView.getChildAt(2);
-            if (settingsBar != null){                
+            if (settingsBar != null) {
                 if (settingsBar.getId() == R.id.news_settings_bar) {
                     compositorView.removeView(settingsBar);
                 }
@@ -714,15 +697,15 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
     }
 
     // Sets NTP background
-    public void setBackground(Bitmap bgWallpaper) {
+    public void setBackground(BitmapDrawable bgWallpaper) {
         CompositorViewHolder compositorView = findViewById(R.id.compositor_view_holder);
 
         ViewGroup root = (ViewGroup) compositorView.getChildAt(1);
         ScrollView scrollView = (ScrollView) root.getChildAt(0);
-        scrollView.setId(View.generateViewId()); 
+        scrollView.setId(View.generateViewId());
 
         //@TODO alex use Glide to set the image?
-        scrollView.setBackground(new BitmapDrawable(bgWallpaper));
+        scrollView.setBackground(bgWallpaper);
     }
 
     private void checkFingerPrintingOnUpgrade() {

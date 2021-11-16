@@ -1,5 +1,3 @@
-import("//brave/build/config.gni")
-
 source_set("brave_news") {
   sources = [
     "brave_news_controller_factory.cc",
@@ -15,11 +13,9 @@ source_set("brave_news") {
     "//components/user_prefs",
     "//content/public/browser",
   ]
-  
+
   if (is_android) {
-    sources += [
-      "android/brave_news_controller_factory_android.cc",
-    ]
+    sources += [ "android/brave_news_controller_factory_android.cc" ]
     deps += [ "//brave/build/android:jni_headers" ]
   }
 }

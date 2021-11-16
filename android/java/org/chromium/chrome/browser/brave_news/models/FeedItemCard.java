@@ -5,21 +5,17 @@
 
 package org.chromium.chrome.browser.brave_news.models;
 
-
-import org.chromium.brave_news.mojom.FeedItem;
 import org.chromium.brave_news.mojom.CardType;
+import org.chromium.brave_news.mojom.FeedItem;
+
 import java.util.Arrays;
 
-
 public class FeedItemCard {
-
     private FeedItem feedItem;
     private int cardType;
     private byte[] imageByte;
 
-    public FeedItemCard() {
-    }
-
+    public FeedItemCard() {}
 
     public FeedItem getFeedItem() {
         return feedItem;
@@ -47,10 +43,8 @@ public class FeedItemCard {
 
     @Override
     public String toString() {
-        return "FeedItemCard{" +
-                "feedItem=" + feedItem +
-                ", cardType=" + cardType +
-                ", imageByte='" + Arrays.toString(imageByte) + '\'' +
-                '}';
+        return "FeedItemCard{"
+                + "feedItem=" + feedItem + ", cardType=" + cardType + ", imageByte='"
+                + Arrays.toString(imageByte) + '\'' + '}';
     }
 }

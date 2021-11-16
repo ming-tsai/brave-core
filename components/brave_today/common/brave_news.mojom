@@ -67,8 +67,8 @@ struct FeedPage {
 struct Feed {
   string hash;
   array<FeedPage> pages;
-  FeedItem? featured_item; // "top_news"
-}; 
+  FeedItem? featured_item;
+};
 
 enum UserEnabled {
   NOT_MODIFIED,

@@ -34,11 +34,9 @@ public final class BravePreferenceKeys {
     public static final String BRAVE_NEWS_DISPLAYAD_CARDS_VISITED =
             "brave_news_displayad_cards_visited";
     public static final String BRAVE_NEWS_DISPLAYAD_CARDS_VIEWED =
-            "brave_news_displayad_cards_viewed";    
-    public static final String BRAVE_NEWS_CHANGE_SOURCE =
-            "brave_news_change_source";    
-    public static final String BRAVE_NEWS_FEED_HASH =
-            "brave_news_feed_hash";
+            "brave_news_displayad_cards_viewed";
+    public static final String BRAVE_NEWS_CHANGE_SOURCE = "brave_news_change_source";
+    public static final String BRAVE_NEWS_FEED_HASH = "brave_news_feed_hash";
     public static final String BRAVE_NEWS_PREF_TURN_ON_NEWS = "kBraveTodayOptedIn";
-    public static final String BRAVE_NEWS_PREF_SHOW_NEWS = "kNewTabPageShowToday";            
+    public static final String BRAVE_NEWS_PREF_SHOW_NEWS = "kNewTabPageShowToday";
 }

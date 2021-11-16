@@ -16,7 +16,7 @@ static jint JNI_BraveNewsControllerFactory_GetInterfaceToBraveNewsController(
     JNIEnv* env) {
   auto* profile = ProfileManager::GetActiveUserProfile();
   auto pending =
-      brave_news::BraveNewsControllerFactory::GetInstance()->GetForContext(
+      brave_news::BraveNewsControllerFactory::GetInstance()->GetRemoteService(
           profile);
   auto passPipe = pending.PassPipe();
 

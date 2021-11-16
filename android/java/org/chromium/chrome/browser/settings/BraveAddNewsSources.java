@@ -1,5 +1,4 @@
-
-/* Copyright (c) 2020 The Brave Authors. All rights reserved.
+/* Copyright (c) 2021 The Brave Authors. All rights reserved.
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -26,33 +25,31 @@ import androidx.preference.SwitchPreference;
 
 import org.chromium.base.ContextUtils;
 import org.chromium.base.Log;
+import org.chromium.brave_news.mojom.BraveNewsController;
+import org.chromium.brave_news.mojom.Publisher;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.BraveLaunchIntentDispatcher;
 import org.chromium.chrome.browser.app.BraveActivity;
+import org.chromium.chrome.browser.brave_news.BraveNewsControllerFactory;
 import org.chromium.chrome.browser.preferences.BravePreferenceKeys;
 import org.chromium.chrome.browser.settings.BravePreferenceFragment;
 import org.chromium.components.browser_ui.settings.ChromeBaseCheckBoxPreference;
 import org.chromium.components.browser_ui.settings.ChromeSwitchPreference;
 import org.chromium.components.browser_ui.settings.SettingsUtils;
-
-import org.chromium.brave_news.mojom.Publisher;
-import org.chromium.brave_news.mojom.BraveNewsController;
-import org.chromium.chrome.browser.brave_news.BraveNewsControllerFactory;
 import org.chromium.mojo.bindings.ConnectionErrorHandler;
 import org.chromium.mojo.system.MojoException;
-import java.util.Map;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-public class BraveAddNewsSources
-        extends BravePreferenceFragment implements Preference.OnPreferenceChangeListener,
-        ConnectionErrorHandler {
+public class BraveAddNewsSources extends BravePreferenceFragment
+        implements Preference.OnPreferenceChangeListener, ConnectionErrorHandler {
     private static final String PREF_ADD_SOURCES = "news_source_1";
     private EditTextPreference addSource;
     private EditText mEditText;
     private PreferenceScreen mainScreen;
-    private BraveNewsController mBraveNewsController; 
+    private BraveNewsController mBraveNewsController;
     private ArrayList<Publisher> mPublishers;
 
     public static int getPreferenceSummary() {
@@ -61,6 +58,9 @@ public class BraveAddNewsSources
 
     @Override
     public void onConnectionError(MojoException e) {
+        if (mBraveNewsController != null) {
+            mBraveNewsController.close();
+        }
         mBraveNewsController = null;
         InitBraveNewsController();
     }
@@ -89,41 +89,23 @@ public class BraveAddNewsSources
         mPublishers = new ArrayList<>();
 
         mBraveNewsController.getPublishers((publishers) -> {
-            Log.d("bn", "getfeed publishers: " + publishers);
-            for (Map.Entry<String,Publisher> entry : publishers.entrySet()) {
+            for (Map.Entry<String, Publisher> entry : publishers.entrySet()) {
                 String key = entry.getKey();
                 Publisher publisher = entry.getValue();
                 mPublishers.add(publisher);
-                Log.d("bn", "getfeed publisher data key: " + key);
-                Log.d("bn", "getfeed publisher data value: " + publisher);
-                CheckBoxPreference source = new CheckBoxPreference(ContextUtils.getApplicationContext());
-                // ChromeSwitchPreference source = new ChromeSwitchPreference(ContextUtils.getApplicationContext());
+                CheckBoxPreference source =
+                        new CheckBoxPreference(ContextUtils.getApplicationContext());
                 source.setTitle(publisher.publisherName);
                 mainScreen.addPreference(source);
-                
-              // do stuff
             }
         });
     }
-
-    // @Override
-    // public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-    //     getActivity().setTitle(R.string.prefs_use_custom_tabs);
-    //     SettingsUtils.addPreferencesFromResource(this, R.xml.use_custom_tabs_brave_preference);
-
-    //     ChromeSwitchPreference pref = (ChromeSwitchPreference) findPreference(
-    //             BravePreferenceKeys.BRAVE_USE_CUSTOM_TABS);
-    //     pref.setChecked(BraveLaunchIntentDispatcher.useCustomTabs());
-    //     pref.setOnPreferenceChangeListener(this); formulaires.chumontreal.qc.ca
-    // }
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         String key = preference.getKey();
 
         if (PREF_ADD_SOURCES.equals(key)) {
-            Log.d("bn", "edittext:" + mEditText);
-
             PreferenceManager manager = getPreferenceManager();
             PreferenceScreen sourcesScreen =
                     manager.createPreferenceScreen(ContextUtils.getApplicationContext());
@@ -147,22 +129,9 @@ public class BraveAddNewsSources
             Preference button = new Preference(ContextUtils.getApplicationContext());
             button.setTitle("Add");
             button.setKey("add_news_source");
-            button.setSummary("Cool button stuff");
             button.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    Log.d("bn", "adding sources...");
-                    ArrayList<Preference> list =
-                            getPreferenceList(sourcesScreen, new ArrayList<Preference>());
-                    for (Preference p : list) {
-                        if (p instanceof CheckBoxPreference) {
-                            CheckBoxPreference pref = (CheckBoxPreference) p;
-                            // Log.d("bn", "CheckBoxPreference: ");
-                            if (pref.isChecked()) {
-                                Log.d("bn", "preference: " + p.getTitle());
-                            }
-                        }
-                    }
                     setPreferencesFromResource(R.xml.brave_news_preferences, null);
                     return true;
                 }
@@ -175,16 +144,22 @@ public class BraveAddNewsSources
         return true;
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mBraveNewsController != null) {
+            mBraveNewsController.close();
+        }
+    }
+
     private ArrayList<Preference> getPreferenceList(Preference p, ArrayList<Preference> list) {
         if (p instanceof PreferenceCategory || p instanceof PreferenceScreen) {
             PreferenceGroup pGroup = (PreferenceGroup) p;
             int pCount = pGroup.getPreferenceCount();
             for (int i = 0; i < pCount; i++) {
-                Log.d("bn", "in for:" + pGroup.getPreference(i).getTitle());
                 getPreferenceList(pGroup.getPreference(i), list); // recursive call
             }
         } else {
-            Log.d("bn", "in add p:" + p.getTitle());
             list.add(p);
         }
         return list;

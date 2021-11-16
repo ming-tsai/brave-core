@@ -60,7 +60,8 @@
 #include "brave/components/brave_rewards/browser/rewards_p3a.h"
 #include "brave/components/brave_rewards/browser/rewards_service.h"
 #include "brave/components/brave_rewards/common/pref_names.h"
-#include "brave/components/brave_today/buildflags/buildflags.h"
+#include "brave/components/brave_today/common/features.h"
+#include "brave/components/brave_today/common/pref_names.h"
 #include "brave/components/l10n/browser/locale_helper.h"
 #include "brave/components/l10n/common/locale_util.h"
 #include "brave/components/ntp_background_images/common/pref_names.h"
@@ -113,10 +114,6 @@
 #if BUILDFLAG(BRAVE_ADAPTIVE_CAPTCHA_ENABLED)
 #include "brave/components/brave_adaptive_captcha/brave_adaptive_captcha_service.h"
 #include "brave/components/brave_ads/browser/ads_tooltips_delegate.h"
-#endif
-
-#if BUILDFLAG(ENABLE_BRAVE_NEWS)
-#include "brave/components/brave_today/common/pref_names.h"
 #endif
 
 using brave_rewards::RewardsNotificationService;
@@ -534,12 +531,12 @@ bool AdsServiceImpl::IsEnabled() const {
 }
 
 bool AdsServiceImpl::IsBraveNewsEnabled() const {
-#if BUILDFLAG(ENABLE_BRAVE_NEWS)
-  return GetBooleanPref(brave_news::prefs::kBraveTodayOptedIn) &&
-         GetBooleanPref(brave_news::prefs::kNewTabPageShowToday);
-#else
-  return false;
-#endif
+  if (base::FeatureList::IsEnabled(brave_today::features::kBraveNewsFeature)) {
+    return GetBooleanPref(brave_news::prefs::kBraveTodayOptedIn) &&
+           GetBooleanPref(brave_news::prefs::kNewTabPageShowToday);
+  } else {
+    return false;
+  }
 }
 
 bool AdsServiceImpl::ShouldStart() const {
@@ -678,17 +675,17 @@ void AdsServiceImpl::Initialize() {
       brave_rewards::prefs::kWalletBrave,
       base::BindRepeating(&AdsServiceImpl::OnPrefsChanged,
                           base::Unretained(this)));
-#if BUILDFLAG(ENABLE_BRAVE_NEWS)
-  profile_pref_change_registrar_.Add(
-      brave_news::prefs::kBraveTodayOptedIn,
-      base::BindRepeating(&AdsServiceImpl::OnPrefsChanged,
-                          base::Unretained(this)));
+  if (base::FeatureList::IsEnabled(brave_today::features::kBraveNewsFeature)) {
+    profile_pref_change_registrar_.Add(
+        brave_news::prefs::kBraveTodayOptedIn,
+        base::BindRepeating(&AdsServiceImpl::OnPrefsChanged,
+                            base::Unretained(this)));
 
-  profile_pref_change_registrar_.Add(
-      brave_news::prefs::kNewTabPageShowToday,
-      base::BindRepeating(&AdsServiceImpl::OnPrefsChanged,
-                          base::Unretained(this)));
-#endif
+    profile_pref_change_registrar_.Add(
+        brave_news::prefs::kNewTabPageShowToday,
+        base::BindRepeating(&AdsServiceImpl::OnPrefsChanged,
+                            base::Unretained(this)));
+  }
   MaybeStart(false);
 }
 
@@ -1865,11 +1862,11 @@ void AdsServiceImpl::OnPrefsChanged(const std::string& pref) {
     StartCheckIdleStateTimer();
   } else if (pref == brave_rewards::prefs::kWalletBrave) {
     OnWalletUpdated();
-#if BUILDFLAG(ENABLE_BRAVE_NEWS)
-  } else if (pref == brave_news::prefs::kBraveTodayOptedIn ||
-             pref == brave_news::prefs::kNewTabPageShowToday) {
+  } else if (base::FeatureList::IsEnabled(
+                 brave_today::features::kBraveNewsFeature) &&
+             (pref == brave_news::prefs::kBraveTodayOptedIn ||
+              pref == brave_news::prefs::kNewTabPageShowToday)) {
     MaybeStart(/* should_restart */ false);
-#endif
   }
 }
 
