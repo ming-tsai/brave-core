@@ -5,7 +5,7 @@ import("//mojo/public/tools/bindings/mojom.gni")
 static_library("common") {
   public_deps = [ "buildflags" ]
   sources = [
-    "feature.h",
+    "features.h",
     "features.cc",
     "pref_names.h",
     "switches.cc",
