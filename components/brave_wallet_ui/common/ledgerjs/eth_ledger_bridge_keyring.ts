@@ -13,6 +13,7 @@ import {
 import { getLocale } from '../../../common/locale'
 import { hardwareDeviceIdFromAddress } from '../hardwareDeviceIdFromAddress'
 import { GetAccountsHardwareOperationResult, SignatureVRS, SignHardwareMessageOperationResult, SignHardwareTransactionOperationResult } from '../../common/hardware_operations'
+import { assert } from 'chrome://resources/js/assert.m.js'
 
 export enum LedgerErrorsCodes {
   TransportLocked = 'TransportLocked'
@@ -22,6 +23,8 @@ export default class LedgerBridgeKeyring extends EventEmitter {
   constructor () {
     super()
   }
+
+  private app: Eth
 
   type = () => {
     return LEDGER_HARDWARE_VENDOR
@@ -37,7 +40,7 @@ export default class LedgerBridgeKeyring extends EventEmitter {
     const accounts = []
     for (let i = from; i <= to; i++) {
       const path = this.getPathForIndex(i, scheme)
-      const address = await this._getAddress(path)
+      const address = await this.app.getAddress(path)
       accounts.push({
         address: address.address,
         derivationPath: path,
@@ -65,8 +68,9 @@ export default class LedgerBridgeKeyring extends EventEmitter {
     await this.makeApp()
 
     if (this.app) {
+      const eth: Eth = this.app
       const zeroPath = this.getPathForIndex(0, LedgerDerivationPaths.LedgerLive)
-      const address = await this._getAddress(zeroPath)
+      const address = (await eth.getAddress(zeroPath)).address
       this.deviceId_ = await hardwareDeviceIdFromAddress(address)
     }
     return this.isUnlocked()
@@ -85,8 +89,9 @@ export default class LedgerBridgeKeyring extends EventEmitter {
       return { success: false, error: getLocale('braveWalletUnlockError') }
     }
     try {
-      const data = await this.app.signPersonalMessage(path,
-        Buffer.from(message))
+      const eth: Eth = this.app
+      const messageHex = Buffer.from(message).toString('hex')
+      const data = await eth.signPersonalMessage(path, messageHex)
       const signature = this.createMessageSignature(data)
       if (!signature) {
         return { success: false, error: getLocale('braveWalletLedgerValidationError') }
@@ -95,6 +100,10 @@ export default class LedgerBridgeKeyring extends EventEmitter {
     } catch (e) {
       return { success: false, error: e.message, code: e.id }
     }
+  }
+
+  cancelOperation = async () => {
+    this.app.transport.close()
   }
 
   private readonly createMessageSignature = (result: SignatureVRS) => {
@@ -106,21 +115,11 @@ export default class LedgerBridgeKeyring extends EventEmitter {
     return signature
   }
 
-  /* PRIVATE METHODS */
-  private readonly getPathForIndex = (index: number, scheme: string) => {
+  private readonly getPathForIndex = (index: number, scheme: string): string => {
     if (scheme === LedgerDerivationPaths.LedgerLive) {
       return `m/44'/60'/${index}'/0/0`
-    } else if (scheme === LedgerDerivationPaths.Legacy) {
-      return `m/44'/60'/${index}'/0`
-    } else {
-      throw Error(getLocale('braveWalletDeviceUnknownScheme'))
     }
-  }
-
-  _getAddress = async (path: string) => {
-    if (!this.isUnlocked()) {
-      return null
-    }
-    return this.app.getAddress(path)
+    assert(scheme === LedgerDerivationPaths.Legacy)
+    return `m/44'/60'/${index}'/0`
   }
 }
