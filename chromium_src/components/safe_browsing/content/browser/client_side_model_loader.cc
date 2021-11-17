@@ -14,6 +14,6 @@
   return;                           \
   net::NetworkTrafficAnnotationTag
 
-#include "../../../../../../components/safe_browsing/content/browser/client_side_model_loader.cc"
+#include "src/components/safe_browsing/content/browser/client_side_model_loader.cc"
 
 #undef NetworkTrafficAnnotationTag

@@ -18,7 +18,7 @@
  public:                                                                  \
   void set_use_custom_frame
 
-#include "../../../../../ui/views/window/dialog_delegate.h"
+#include "src/ui/views/window/dialog_delegate.h"
 
 #undef set_use_custom_frame
 

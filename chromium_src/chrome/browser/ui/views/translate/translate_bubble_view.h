@@ -28,7 +28,7 @@
 class BraveTranslateBubbleView;
 #define TranslateBubbleView ChromiumTranslateBubbleView
 #define CreateTranslateIcon virtual CreateTranslateIcon
-#include "../../../../../../../chrome/browser/ui/views/translate/translate_bubble_view.h"
+#include "src/chrome/browser/ui/views/translate/translate_bubble_view.h"
 #undef CreateTranslateIcon
 #undef TranslateBubbleView
 #undef BRAVE_TRANSLATE_BUBBLE_VIEW_H_

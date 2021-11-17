@@ -40,7 +40,7 @@ std::unique_ptr<PageInfoHoverButton> CreateButton(
 #define InitializeUiState InitializeUiState(this); if (ipfs::IsIPFSScheme(url)) BraveAddIPFSButtons  // NOLINT
 // clang-format on
 
-#include "../../../../../../../chrome/browser/ui/views/page_info/page_info_bubble_view.cc"
+#include "src/chrome/browser/ui/views/page_info/page_info_bubble_view.cc"
 #undef InitializeUiState
 
 void PageInfoBubbleView::BraveAddIPFSButtons(PageInfoBubbleView* ui) {

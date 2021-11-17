@@ -13,7 +13,7 @@
 #define RefreshLocalDeviceInfoIfNeeded \
   RefreshLocalDeviceInfoIfNeeded_ChromiumImpl
 
-#include "../../../../components/sync_device_info/device_info_sync_bridge.cc"
+#include "src/components/sync_device_info/device_info_sync_bridge.cc"
 
 #undef RefreshLocalDeviceInfoIfNeeded
 #undef BRAVE_MAKE_LOCAL_DEVICE_SPECIFICS

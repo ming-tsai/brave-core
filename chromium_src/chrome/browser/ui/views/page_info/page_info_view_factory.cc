@@ -10,6 +10,6 @@
     icon = &kAutoplayStatusIcon;                         \
     break;
 
-#include "../../../../../../../chrome/browser/ui/views/page_info/page_info_view_factory.cc"
+#include "src/chrome/browser/ui/views/page_info/page_info_view_factory.cc"
 
 #undef BRAVE_PAGE_INFO_VIEW_FACTORY_GET_PERMISSION_ICON

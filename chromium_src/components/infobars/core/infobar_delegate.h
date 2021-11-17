@@ -11,7 +11,7 @@
   WAYBACK_MACHINE_INFOBAR_DELEGATE = 502,   \
   SYNC_V2_MIGRATE_INFOBAR_DELEGATE = 503,
 
-#include "../../../../../components/infobars/core/infobar_delegate.h"
+#include "src/components/infobars/core/infobar_delegate.h"
 
 #undef BRAVE_INFOBAR_DELEGATE_IDENTIFIERS
 

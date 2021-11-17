@@ -11,6 +11,6 @@
       kWelcomeHost, kWalletPageHost, kTorInternalsHost
 #define kChromeUIAppCacheInternalsHost \
   kChromeUIAppCacheInternalsHost, BRAVE_HOST_URLS
-#include "../../../../chrome/common/webui_url_constants.cc"
+#include "src/chrome/common/webui_url_constants.cc"
 #undef kChromeUIAppCacheInternalsHost
 #undef BRAVE_HOST_URLS

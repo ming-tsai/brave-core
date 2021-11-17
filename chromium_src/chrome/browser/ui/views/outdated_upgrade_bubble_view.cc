@@ -4,4 +4,4 @@
 
 #include "brave/common/url_constants.h"  // for kDownloadBraveUrl
 
-#include "../../../../../../chrome/browser/ui/views/outdated_upgrade_bubble_view.cc"
+#include "src/chrome/browser/ui/views/outdated_upgrade_bubble_view.cc"

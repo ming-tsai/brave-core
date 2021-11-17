@@ -12,7 +12,7 @@ class PageInfoBubbleView;
   BraveAddIPFSButtons(PageInfoBubbleView* ui); \
   void HandleMoreInfoRequest
 
-#include "../../../../../../../chrome/browser/ui/views/page_info/page_info_bubble_view.h"
+#include "src/chrome/browser/ui/views/page_info/page_info_bubble_view.h"
 #undef HandleMoreInfoRequest
 
 #endif  // BRAVE_CHROMIUM_SRC_CHROME_BROWSER_UI_VIEWS_PAGE_INFO_PAGE_INFO_BUBBLE_VIEW_H_

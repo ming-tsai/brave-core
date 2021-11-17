@@ -48,7 +48,7 @@ std::unique_ptr<views::ImageView> TranslateBubbleView::CreateTranslateIcon() {
 #define MAKE_BRAVE_TRANSLATE_BUBBLE_VIEW MakeTranslateBubbleView
 #define TranslateBubbleView ChromiumTranslateBubbleView
 
-#include "../../../../../../../chrome/browser/ui/views/translate/translate_bubble_view.cc"
+#include "src/chrome/browser/ui/views/translate/translate_bubble_view.cc"
 
 #undef TranslateBubbleView
 #undef MAKE_BRAVE_TRANSLATE_BUBBLE_VIEW
