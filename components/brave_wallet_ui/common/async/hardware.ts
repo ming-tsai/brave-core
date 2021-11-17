@@ -104,3 +104,10 @@ export function parseLedgerDeviceError (e: any): HardwareWalletErrorType {
 
   return 'deviceNotConnected'
 }
+
+export async function cancelHardwareOperation (apiProxy: WalletApiProxy, vendor: string) {
+  const deviceKeyring = await apiProxy.getKeyringsByType(vendor)
+  if (deviceKeyring instanceof LedgerBridgeKeyring || deviceKeyring instanceof TrezorBridgeKeyring) {
+    return deviceKeyring.cancelOperation()
+  }
+}
