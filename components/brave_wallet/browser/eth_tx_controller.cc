@@ -253,6 +253,23 @@ void EthTxController::ContinueAddUnapprovedTransaction(
   uint256_t gas_limit;
   if (!success || !HexValueToUint256(result, &gas_limit)) {
     gas_limit = 0;
+    mojom::TransactionType tx_type;
+    if (GetTransactionInfoFromData(ToHex(tx->data()), &tx_type, nullptr,
+                                   nullptr)) {
+      // Try to use reasonable values when we can't get an estimation.
+      // These are taken via looking through the different types of transactions
+      // on etherscan and taking the next rounded up value for the largest found
+      if (tx_type == mojom::TransactionType::ETHSend) {
+        gas_limit = kDefaultSendEthGasLimit;
+      } else if (tx_type == mojom::TransactionType::ERC20Transfer) {
+        gas_limit = kDefaultERC20TransferGasLimit;
+      } else if (tx_type == mojom::TransactionType::ERC721TransferFrom ||
+                 tx_type == mojom::TransactionType::ERC721SafeTransferFrom) {
+        gas_limit = kDefaultERC721TransferGasLimit;
+      } else if (tx_type == mojom::TransactionType::ERC20Approve) {
+        gas_limit = kDefaultERC20ApproveGasLimit;
+      }
+    }
   }
   tx->set_gas_limit(gas_limit);
 
@@ -360,14 +377,14 @@ void EthTxController::OnGetGasOracle(
   }
 }
 
-void EthTxController::ApproveHardwareTransaction(
+void EthTxController::GetNonceForHardwareTransaction(
     const std::string& tx_meta_id,
-    ApproveHardwareTransactionCallback callback) {
+    GetNonceForHardwareTransactionCallback callback) {
   std::unique_ptr<EthTxStateManager::TxMeta> meta =
       tx_state_manager_->GetTx(tx_meta_id);
   if (!meta) {
     LOG(ERROR) << "No transaction found";
-    std::move(callback).Run(false, "");
+    std::move(callback).Run(absl::nullopt);
     return;
   }
   if (!meta->tx->nonce()) {
@@ -383,52 +400,68 @@ void EthTxController::ApproveHardwareTransaction(
   }
 }
 
+void EthTxController::GetTransactionMessageToSign(
+    const std::string& tx_meta_id,
+    GetTransactionMessageToSignCallback callback) {
+  std::unique_ptr<EthTxStateManager::TxMeta> meta =
+      tx_state_manager_->GetTx(tx_meta_id);
+  if (!meta) {
+    VLOG(1) << __FUNCTION__ << "No transaction found with id:" << tx_meta_id;
+    std::move(callback).Run(absl::nullopt);
+    return;
+  }
+  uint256_t chain_id = 0;
+  if (!HexValueToUint256(rpc_controller_->GetChainId(), &chain_id)) {
+    std::move(callback).Run(absl::nullopt);
+    return;
+  }
+  auto message = meta->tx->GetMessageToSign(chain_id, false);
+  auto encoded = brave_wallet::ToHex(message);
+  std::move(callback).Run(encoded);
+}
+
 void EthTxController::OnGetNextNonceForHardware(
     std::unique_ptr<EthTxStateManager::TxMeta> meta,
-    ApproveHardwareTransactionCallback callback,
+    GetNonceForHardwareTransactionCallback callback,
     bool success,
     uint256_t nonce) {
   if (!success) {
     meta->status = mojom::TransactionStatus::Error;
     tx_state_manager_->AddOrUpdateTx(*meta);
-    LOG(ERROR) << "GetNextNonce failed";
-    std::move(callback).Run(false, "");
+    VLOG(1) << __FUNCTION__
+            << "GetNextNonce failed for tx with meta:" << meta->id;
+    std::move(callback).Run(absl::nullopt);
     return;
   }
   meta->tx->set_nonce(nonce);
-  meta->status = mojom::TransactionStatus::Approved;
   tx_state_manager_->AddOrUpdateTx(*meta);
-  uint256_t chain_id = 0;
-  if (!HexValueToUint256(rpc_controller_->GetChainId(), &chain_id)) {
-    std::move(callback).Run(false, "");
-    return;
-  }
-
-  auto message = meta->tx->GetMessageToSign(chain_id, false);
-  auto encoded = brave_wallet::ToHex(message);
-  std::move(callback).Run(true, encoded);
+  std::move(callback).Run(Uint256ValueToHex(nonce));
 }
 
-void EthTxController::ProcessLedgerSignature(
+void EthTxController::ProcessHardwareSignature(
     const std::string& tx_meta_id,
     const std::string& v,
     const std::string& r,
     const std::string& s,
-    ProcessLedgerSignatureCallback callback) {
+    ProcessHardwareSignatureCallback callback) {
   std::unique_ptr<EthTxStateManager::TxMeta> meta =
       tx_state_manager_->GetTx(tx_meta_id);
   if (!meta) {
-    LOG(ERROR) << "No transaction found";
+    VLOG(1) << __FUNCTION__ << "No transaction found with id" << tx_meta_id;
     std::move(callback).Run(false);
     return;
   }
   if (!meta->tx->ProcessVRS(v, r, s)) {
-    LOG(ERROR) << "Could not initialize a transaction with v,r,s";
+    VLOG(1) << __FUNCTION__
+            << "Could not initialize a transaction with v,r,s for id:"
+            << tx_meta_id;
     meta->status = mojom::TransactionStatus::Error;
     tx_state_manager_->AddOrUpdateTx(*meta);
     std::move(callback).Run(false);
     return;
   }
+  meta->status = mojom::TransactionStatus::Approved;
+  tx_state_manager_->AddOrUpdateTx(*meta);
   auto data = meta->tx->GetSignedTransaction();
   PublishTransaction(tx_meta_id, data);
   std::move(callback).Run(true);

@@ -4,11 +4,11 @@ import * as React from 'react'
 import {
   PriceDataObjectType,
   AccountTransactions,
-  AssetPriceInfo,
+  AssetPrice,
   WalletAccountType,
   AssetPriceTimeframe,
   AccountAssetOptionType,
-  TokenInfo,
+  ERCToken,
   EthereumChain,
   TransactionInfo
 } from '../../../../constants/types'
@@ -63,20 +63,21 @@ import {
   TransactionPlaceholderText,
   AssetBalanceDisplay,
   DividerRow,
-  Spacer
+  Spacer,
+  CoinGeckoText
 } from './style'
 
 export interface Props {
   toggleNav: () => void
   onChangeTimeline: (path: AssetPriceTimeframe) => void
-  onSelectAsset: (asset: TokenInfo | undefined) => void
+  onSelectAsset: (asset: ERCToken | undefined) => void
   onSelectAccount: (account: WalletAccountType) => void
   onClickAddAccount: () => void
   fetchFullTokenList: () => void
   onSelectNetwork: (network: EthereumChain) => void
-  onAddUserAsset: (token: TokenInfo) => void
-  onSetUserAssetVisible: (token: TokenInfo, isVisible: boolean) => void
-  onRemoveUserAsset: (token: TokenInfo) => void
+  onAddUserAsset: (token: ERCToken) => void
+  onSetUserAssetVisible: (token: ERCToken, isVisible: boolean) => void
+  onRemoveUserAsset: (token: ERCToken) => void
   addUserAssetError: boolean
   selectedNetwork: EthereumChain
   networkList: EthereumChain[]
@@ -84,18 +85,21 @@ export interface Props {
   accounts: WalletAccountType[]
   selectedTimeline: AssetPriceTimeframe
   selectedPortfolioTimeline: AssetPriceTimeframe
-  selectedAsset: TokenInfo | undefined
-  selectedUSDAssetPrice: AssetPriceInfo | undefined
-  selectedBTCAssetPrice: AssetPriceInfo | undefined
+  selectedAsset: ERCToken | undefined
+  selectedUSDAssetPrice: AssetPrice | undefined
+  selectedBTCAssetPrice: AssetPrice | undefined
   selectedAssetPriceHistory: PriceDataObjectType[]
   portfolioPriceHistory: PriceDataObjectType[]
   portfolioBalance: string
   transactions: AccountTransactions
   isLoading: boolean
-  fullAssetList: TokenInfo[]
-  userVisibleTokensInfo: TokenInfo[]
+  fullAssetList: ERCToken[]
+  userVisibleTokensInfo: ERCToken[]
   isFetchingPortfolioPriceHistory: boolean
-  transactionSpotPrices: AssetPriceInfo[]
+  transactionSpotPrices: AssetPrice[]
+  onRetryTransaction: (transaction: TransactionInfo) => void
+  onSpeedupTransaction: (transaction: TransactionInfo) => void
+  onCancelTransaction: (transaction: TransactionInfo) => void
 }
 
 const Portfolio = (props: Props) => {
@@ -128,7 +132,10 @@ const Portfolio = (props: Props) => {
     userAssetList,
     isLoading,
     isFetchingPortfolioPriceHistory,
-    transactionSpotPrices
+    transactionSpotPrices,
+    onRetryTransaction,
+    onSpeedupTransaction,
+    onCancelTransaction
   } = props
 
   const [filteredAssetList, setfilteredAssetList] = React.useState<AccountAssetOptionType[]>(userAssetList)
@@ -168,7 +175,7 @@ const Portfolio = (props: Props) => {
     }
   }
 
-  const selectAsset = (asset: TokenInfo) => () => {
+  const selectAsset = (asset: ERCToken) => () => {
     onSelectAsset(asset)
     toggleNav()
   }
@@ -213,12 +220,12 @@ const Portfolio = (props: Props) => {
     setShowVisibleAssetsModal(!showVisibleAssetsModal)
   }
 
-  const getFiatBalance = (account: WalletAccountType, asset: TokenInfo) => {
+  const getFiatBalance = (account: WalletAccountType, asset: ERCToken) => {
     const found = account.tokens.find((token) => token.asset.contractAddress === asset.contractAddress)
     return (found) ? found.fiatBalance : '0'
   }
 
-  const getAssetBalance = (account: WalletAccountType, asset: TokenInfo) => {
+  const getAssetBalance = (account: WalletAccountType, asset: ERCToken) => {
     const found = account.tokens.find((token) => token.asset.contractAddress === asset.contractAddress)
     return (found) ? formatBalance(found.assetBalance, found.asset.decimals) : '0'
   }
@@ -279,7 +286,7 @@ const Portfolio = (props: Props) => {
       </TopRow>
       {!selectedAsset ? (
         <>
-          <BalanceText>${hoverBalance ? hoverBalance : portfolioBalance}</BalanceText>
+          <BalanceText>${hoverBalance || portfolioBalance}</BalanceText>
         </>
       ) : (
         <InfoColumn>
@@ -289,7 +296,7 @@ const Portfolio = (props: Props) => {
           </AssetRow>
           <DetailText>{selectedAsset.name} {getLocale('braveWalletPrice')} ({selectedAsset.symbol})</DetailText>
           <PriceRow>
-            <PriceText>${hoverPrice ? hoverPrice : selectedUSDAssetPrice ? formatWithCommasAndDecimals(selectedUSDAssetPrice.price) : 0.00}</PriceText>
+            <PriceText>${hoverPrice || (selectedUSDAssetPrice ? formatWithCommasAndDecimals(selectedUSDAssetPrice.price) : 0.00)}</PriceText>
             <PercentBubble isDown={selectedUSDAssetPrice ? Number(selectedUSDAssetPrice.assetTimeframeChange) < 0 : false}>
               <ArrowIcon isDown={selectedUSDAssetPrice ? Number(selectedUSDAssetPrice.assetTimeframeChange) < 0 : false} />
               <PercentText>{selectedUSDAssetPrice ? Number(selectedUSDAssetPrice.assetTimeframeChange).toFixed(2) : 0.00}%</PercentText>
@@ -347,6 +354,9 @@ const Portfolio = (props: Props) => {
                   displayAccountName={true}
                   onSelectAccount={onSelectAccount}
                   onSelectAsset={onSelectAsset}
+                  onRetryTransaction={onRetryTransaction}
+                  onSpeedupTransaction={onSpeedupTransaction}
+                  onCancelTransaction={onCancelTransaction}
                 />
               )}
             </>
@@ -355,7 +365,7 @@ const Portfolio = (props: Props) => {
               <TransactionPlaceholderText>{getLocale('braveWalletTransactionPlaceholder')}</TransactionPlaceholderText>
             </EmptyTransactionContainer>
           )}
-
+          <CoinGeckoText>{getLocale('braveWalletPoweredByCoinGecko')}</CoinGeckoText>
         </>
       }
       {!selectedAsset &&

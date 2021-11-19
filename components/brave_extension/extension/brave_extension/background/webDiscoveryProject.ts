@@ -5,7 +5,7 @@
 
 import { App } from '../../../../../vendor/web-discovery-project/build'
 
-declare var window: any
+declare let window: any
 
 function onCommitted (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) {
   // Only inject if page is acceptable protocol (to skip internal pages like
@@ -27,7 +27,7 @@ function onCommitted (details: chrome.webNavigation.WebNavigationTransitionCallb
   }
 }
 
-if (App !== undefined && !chrome.extension.inIncognitoContext) {
+if (!chrome.extension.inIncognitoContext) {
   const APP = new App({
     version: chrome.runtime.getManifest().version
   })

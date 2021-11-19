@@ -11,10 +11,18 @@ import {
   EthereumChainRequestPayload,
   SignMessagePayload,
   SignMessageProcessedPayload,
-  SignMessageHardwareProcessedPayload
+  SignMessageHardwareProcessedPayload,
+  SwitchEthereumChainProcessedPayload
 } from '../constants/action_types'
-import { SwapErrorResponse, SwapResponse, SignMessageData } from '../../constants/types'
+import {
+  SwapErrorResponse,
+  SwapResponse,
+  SignMessageRequest,
+  SwitchChainRequest,
+  HardwareWalletErrorType
+} from '../../constants/types'
 import { SwapParamsPayloadType } from '../../common/constants/action_types'
+import { TransactionInfo } from 'gen/brave/components/brave_wallet/common/brave_wallet.mojom.m.js'
 
 export const connectToSite = createAction<AccountPayloadType>('connectToSite')
 export const cancelConnectToSite = createAction<AccountPayloadType>('cancelConnectToSite')
@@ -22,6 +30,8 @@ export const visibilityChanged = createAction<boolean>('visibilityChanged')
 export const showConnectToSite = createAction<ShowConnectToSitePayload>('showConnectToSite')
 export const addEthereumChain = createAction<EthereumChainPayload>('addEthereumChain')
 export const addEthereumChainRequestCompleted = createAction<EthereumChainRequestPayload>('AddEthereumChainRequestCompleted')
+export const switchEthereumChain = createAction<SwitchChainRequest>('switchEthereumChain')
+export const switchEthereumChainProcessed = createAction<SwitchEthereumChainProcessedPayload>('switchEthereumChainProcessed')
 export const showApproveTransaction = createAction('showApproveTransaction')
 export const setupWallet = createAction('setupWallet')
 export const expandWallet = createAction('expandWallet')
@@ -30,10 +40,13 @@ export const openWalletApps = createAction('openWalletApps')
 export const expandRestoreWallet = createAction('expandRestoreWallet')
 export const expandWalletAccounts = createAction('expandWalletAccounts')
 export const navigateTo = createAction<string>('navigateTo')
+export const navigateToMain = createAction('navigateToMain')
 export const setPanelSwapQuote = createAction<SwapResponse>('setPanelSwapQuote')
 export const setPanelSwapError = createAction<SwapErrorResponse | undefined>('setPanelSwapError')
 export const fetchPanelSwapQuote = createAction<SwapParamsPayloadType>('fetchPanelSwapQuote')
 export const signMessage = createAction<SignMessagePayload[]>('signMessage')
 export const signMessageProcessed = createAction<SignMessageProcessedPayload>('signMessageProcessed')
-export const signMessageHardware = createAction<SignMessageData>('signMessageHardware')
+export const signMessageHardware = createAction<SignMessageRequest>('signMessageHardware')
 export const signMessageHardwareProcessed = createAction<SignMessageHardwareProcessedPayload>('signMessageHardwareProcessed')
+export const approveHardwareTransaction = createAction<TransactionInfo>('approveHardwareTransaction')
+export const setHardwareWalletInteractionError = createAction<HardwareWalletErrorType | undefined>('setHardwareWalletInteractionError')

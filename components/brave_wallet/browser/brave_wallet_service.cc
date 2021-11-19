@@ -589,7 +589,8 @@ void BraveWalletService::GetPendingSignMessageRequests(
 
 void BraveWalletService::NotifySignMessageRequestProcessed(bool approved,
                                                            int id) {
-  if (sign_message_requests_.front()->id != id) {
+  if (sign_message_requests_.empty() ||
+      sign_message_requests_.front()->id != id) {
     VLOG(1) << "id: " << id << " is not expected, should be "
             << sign_message_requests_.front()->id;
     return;
@@ -606,7 +607,8 @@ void BraveWalletService::NotifySignMessageHardwareRequestProcessed(
     int id,
     const std::string& signature,
     const std::string& error) {
-  if (sign_message_requests_.front()->id != id) {
+  if (sign_message_requests_.empty() ||
+      sign_message_requests_.front()->id != id) {
     VLOG(1) << "id: " << id << " is not expected, should be "
             << sign_message_requests_.front()->id;
     return;
@@ -664,6 +666,12 @@ void BraveWalletService::OnGetImportInfo(
           [](ImportFromCryptoWalletsCallback callback,
              size_t number_of_accounts, KeyringController* keyring_controller,
              bool is_valid_mnemonic) {
+            if (!is_valid_mnemonic) {
+              std::move(callback).Run(
+                  false,
+                  l10n_util::GetStringUTF8(IDS_WALLET_INVALID_MNEMONIC_ERROR));
+              return;
+            }
             if (number_of_accounts > 1) {
               keyring_controller->AddAccountsWithDefaultName(
                   number_of_accounts - 1);

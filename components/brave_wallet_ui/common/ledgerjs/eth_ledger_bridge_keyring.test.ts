@@ -2,7 +2,6 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* global window */
 
 import LedgerBridgeKeyring from './eth_ledger_bridge_keyring'
 
@@ -11,9 +10,9 @@ import {
 } from '../../components/desktop/popup-modals/add-account-modal/hardware-wallet-connect/types'
 
 import {
-  kLedgerHardwareVendor,
-  SignatureVRS
+  LEDGER_HARDWARE_VENDOR
 } from '../../constants/types'
+import { SignatureVRS } from '../hardware_operations'
 
 class MockApp {
   signature: SignatureVRS
@@ -39,47 +38,53 @@ const createLedgerKeyring = () => {
 
 test('Extracting accounts from device', () => {
   return expect(createLedgerKeyring().getAccounts(-2, 1, LedgerDerivationPaths.LedgerLive))
-    .resolves.toStrictEqual([
-      {
-        'address': 'address for m/44\'/60\'/0\'/0/0',
-        'derivationPath': 'm/44\'/60\'/0\'/0/0',
-        'hardwareVendor': 'Ledger',
-        'name': 'Ledger',
-        'deviceId': 'device1'
-      },
-      {
-        'address': 'address for m/44\'/60\'/1\'/0/0',
-        'derivationPath': 'm/44\'/60\'/1\'/0/0',
-        'hardwareVendor': 'Ledger',
-        'name': 'Ledger',
-        'deviceId': 'device1'
-      }]
+    .resolves.toStrictEqual({
+        payload: [
+          {
+            'address': 'address for m/44\'/60\'/0\'/0/0',
+            'derivationPath': 'm/44\'/60\'/0\'/0/0',
+            'hardwareVendor': 'Ledger',
+            'name': 'Ledger',
+            'deviceId': 'device1'
+          },
+          {
+            'address': 'address for m/44\'/60\'/1\'/0/0',
+            'derivationPath': 'm/44\'/60\'/1\'/0/0',
+            'hardwareVendor': 'Ledger',
+            'name': 'Ledger',
+            'deviceId': 'device1'
+          }],
+        success: true
+      }
     )
 })
 
 test('Extracting accounts from legacy device', () => {
   return expect(createLedgerKeyring().getAccounts(-2, 1, LedgerDerivationPaths.Legacy))
-    .resolves.toStrictEqual([
-      {
-        'address': 'address for m/44\'/60\'/0\'/0',
-        'derivationPath': 'm/44\'/60\'/0\'/0',
-        'hardwareVendor': 'Ledger',
-        'name': 'Ledger',
-        'deviceId': 'device1'
-      },
-      {
-        'address': 'address for m/44\'/60\'/1\'/0',
-        'derivationPath': 'm/44\'/60\'/1\'/0',
-        'hardwareVendor': 'Ledger',
-        'name': 'Ledger',
-        'deviceId': 'device1'
-      }]
+    .resolves.toStrictEqual({
+        payload: [
+          {
+            'address': 'address for m/44\'/60\'/0\'/0',
+            'derivationPath': 'm/44\'/60\'/0\'/0',
+            'hardwareVendor': 'Ledger',
+            'name': 'Ledger',
+            'deviceId': 'device1'
+          },
+          {
+            'address': 'address for m/44\'/60\'/1\'/0',
+            'derivationPath': 'm/44\'/60\'/1\'/0',
+            'hardwareVendor': 'Ledger',
+            'name': 'Ledger',
+            'deviceId': 'device1'
+          }],
+        success: true
+      }
     )
 })
 
 test('Check ledger bridge type', () => {
   const ledgerHardwareKeyring = new LedgerBridgeKeyring()
-  return expect(ledgerHardwareKeyring.type()).toStrictEqual(kLedgerHardwareVendor)
+  return expect(ledgerHardwareKeyring.type()).toStrictEqual(LEDGER_HARDWARE_VENDOR)
 })
 
 test('Check locks for device', () => {
@@ -95,7 +100,7 @@ test('Extract accounts from locked device', () => {
     return false
   }
   return expect(ledgerHardwareKeyring.getAccounts(-2, 1, LedgerDerivationPaths.LedgerLive))
-  .rejects.toThrow()
+  .resolves.toStrictEqual({ error: 'braveWalletUnlockError', success: false })
 })
 
 test('Extract accounts from unknown device', () => {
@@ -109,21 +114,15 @@ test('Sign personal message successfully', () => {
   const ledgerHardwareKeyring = new LedgerBridgeKeyring()
   ledgerHardwareKeyring.app = new MockApp()
   ledgerHardwareKeyring.app.signature = { v: 1, r: 'b68983', s: 'r68983' }
-  ledgerHardwareKeyring._recoverAddressFromSignature = (message: string, signature: string) => {
-    return '0x111'
-  }
   return expect(ledgerHardwareKeyring.signPersonalMessage(
-    'm/44\'/60\'/0\'/0/0', '0x111', 'message'))
-    .resolves.toStrictEqual('0xb68983r68983-26')
+    'm/44\'/60\'/0\'/0/0', 'message'))
+    .resolves.toStrictEqual({ payload: '0xb68983r68983-26', success: true })
 })
 
 test('Sign personal message failed', () => {
-  const ledgerHardwareKeyring = new LedgerBridgeKeyring()
+  const ledgerHardwareKeyring = createLedgerKeyring()
   ledgerHardwareKeyring.app = new MockApp()
-  ledgerHardwareKeyring._recoverAddressFromSignature = (message: string, signature: string) => {
-    return '0x111'
-  }
   return expect(ledgerHardwareKeyring.signPersonalMessage(
     'm/44\'/60\'/0\'/0/0', '0x111', 'message'))
-    .rejects.toThrow()
+    .resolves.toMatchObject({ success: false })
 })

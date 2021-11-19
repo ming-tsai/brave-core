@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // you can obtain one at http://mozilla.org/MPL/2.0/.
 
-import { WalletAccountType, EthereumChain } from '../../constants/types'
+import { WalletAccountType, EthereumChain, Url } from '../../constants/types'
 
 export type AccountPayloadType = {
   selectedAccounts: WalletAccountType[]
@@ -11,13 +11,13 @@ export type AccountPayloadType = {
 }
 
 export type ShowConnectToSitePayload = {
-  tabId: number,
-  accounts: string[],
+  tabId: number
+  accounts: string[]
   origin: string
 }
 
 export type EthereumChainRequestPayload = {
-  chainId: string,
+  chainId: string
   approved: boolean
 }
 
@@ -26,19 +26,24 @@ export type EthereumChainPayload = {
 }
 
 export type SignMessagePayload = {
-  id: number,
-  address: string,
+  id: number
+  address: string
   message: string
 }
 
 export type SignMessageProcessedPayload = {
-  approved: boolean,
+  approved: boolean
   id: number
 }
 
 export type SignMessageHardwareProcessedPayload = {
-  success: boolean,
-  id: number,
-  signature: string,
-  error: string
+  success: Boolean
+  id: number
+  signature?: string
+  error?: string
+}
+
+export type SwitchEthereumChainProcessedPayload = {
+  approved: boolean
+  origin: Url
 }

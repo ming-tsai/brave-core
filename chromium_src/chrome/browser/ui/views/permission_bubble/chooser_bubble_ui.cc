@@ -35,14 +35,18 @@ class BraveBubbleDialogDelegateView : public views::BubbleDialogDelegateView {
   }
   void WindowClosing() override {
     views::BubbleDialogDelegateView::WindowClosing();
+    if (!anchor_widget())
+      return;
     Browser* browser =
         chrome::FindBrowserWithWindow(anchor_widget()->GetNativeWindow());
+    if (!browser || !browser->tab_strip_model())
+      return;
     content::WebContents* active =
         browser->tab_strip_model()->GetActiveWebContents();
     auto* tab_helper =
         brave_wallet::BraveWalletTabHelper::FromWebContents(active);
     if (tab_helper)
-      tab_helper->ClosePanelOnDeactivate(true);
+      tab_helper->SetCloseOnDeactivate(true);
   }
 };
 
@@ -62,7 +66,7 @@ Browser* FindBrowserAndAdjustBubbleForBraveWalletPanel(
   auto* tab_helper =
       brave_wallet::BraveWalletTabHelper::FromWebContents(active);
   if (tab_helper)
-    tab_helper->ClosePanelOnDeactivate(false);
+    tab_helper->SetCloseOnDeactivate(false);
   return browser;
 }
 

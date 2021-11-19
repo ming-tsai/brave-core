@@ -1,10 +1,11 @@
 import styled from 'styled-components'
+import { WalletButton } from '../../shared/style'
 
 export const StyledWrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-conent: center;
+  justify-content: center;
   padding: 7px;
   background-color: ${(p) => p.theme.color.background02};
   border-radius: 8px;
@@ -15,8 +16,9 @@ export const StyledWrapper = styled.div`
   z-index: 15;
  `
 
-export const PopupButton = styled.button`
+export const PopupButton = styled(WalletButton)`
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: flex-start;
   cursor: pointer;

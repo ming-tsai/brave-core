@@ -166,6 +166,13 @@ public class BraveWalletActivity
 
     @Override
     public void onConnectionError(MojoException e) {
+        mKeyringController.close();
+        mAssetRatioController.close();
+        mErcTokenRegistry.close();
+        mEthJsonRpcController.close();
+        mEthTxController.close();
+        mBraveWalletService.close();
+
         mKeyringController = null;
         mErcTokenRegistry = null;
         mEthJsonRpcController = null;
@@ -278,9 +285,12 @@ public class BraveWalletActivity
 
     @Override
     public void onDestroy() {
-        if (mKeyringController != null) {
-            mKeyringController.lock();
-        }
+        mKeyringController.close();
+        mAssetRatioController.close();
+        mErcTokenRegistry.close();
+        mEthJsonRpcController.close();
+        mEthTxController.close();
+        mBraveWalletService.close();
         mModalDialogManager.destroy();
         super.onDestroy();
     }

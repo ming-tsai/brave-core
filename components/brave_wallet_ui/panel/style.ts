@@ -9,7 +9,7 @@ export const PanelWrapper = styled.div<StyleProps>`
   align-items: center;
   justify-content: center;
   width: 320px;
-  height: ${(p) => p.isLonger ? '500px' : '400px'};
+  height: ${(p) => p.isLonger ? '540px' : '400px'};
 `
 
 export const SendWrapper = styled.div`
@@ -21,6 +21,6 @@ export const SendWrapper = styled.div`
   overflow-y: scroll;
   overflow-x: hidden;
   position: relative;
-  padding: 0px 24px;
+  padding: 0px 24px 12px;
   box-sizing: border-box;
 `

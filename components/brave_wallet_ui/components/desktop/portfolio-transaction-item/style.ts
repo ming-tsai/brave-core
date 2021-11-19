@@ -2,6 +2,7 @@ import styled from 'styled-components'
 import { TransactionStatus } from '../../../constants/types'
 import { MoreVertRIcon, ArrowRightIcon } from 'brave-ui/components/icons'
 import CoinsIconSVG from '../../../assets/svg-icons/coins-icon.svg'
+import { WalletButton } from '../../shared/style'
 
 interface StyleProps {
   orb: string
@@ -69,7 +70,7 @@ export const ToCircle = styled.div<Partial<StyleProps>>`
   }
 `
 
-export const MoreButton = styled.button`
+export const MoreButton = styled(WalletButton)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -158,15 +159,15 @@ export const StatusBubble = styled.div<Partial<StyleProps>>`
   height: 10px;
   border-radius: 100%;
   opacity: ${(p) => p.status === 3 || p.status === 1 || p.status === 0 ? 0.4 : 1};
-  background-color: ${(p) => p.status === 4 || p.status === 1 ?
-    '#2AC194'
-    : p.status === 2 || p.status === 5 ? '#EE6374' :
-      p.status === 0 ? p.theme.color.interactive08 : p.theme.color.warningIcon
+  background-color: ${(p) => p.status === 4 || p.status === 1
+    ? '#2AC194'
+    : p.status === 2 || p.status === 5 ? '#EE6374'
+      : p.status === 0 ? p.theme.color.interactive08 : p.theme.color.warningIcon
   };
   margin-right: 6px;
 `
 
-export const CoinsButton = styled.button`
+export const CoinsButton = styled(WalletButton)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -187,7 +188,7 @@ export const CoinsIcon = styled.div`
   background-image: url(${CoinsIconSVG});
 `
 
-export const AddressOrAsset = styled.button`
+export const AddressOrAsset = styled(WalletButton)`
   display: inline;
   cursor: pointer;
   outline: none;

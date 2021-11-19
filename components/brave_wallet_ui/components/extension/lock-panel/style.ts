@@ -1,6 +1,7 @@
 import styled from 'styled-components'
 import SecureIcon from '../../../assets/svg-icons/onboarding/secure-your-crypto.svg'
 import SecureIconDark from '../../../assets/svg-icons/onboarding/secure-your-crypto-dark.svg'
+import { WalletButton } from '../../shared/style'
 
 export const StyledWrapper = styled.div`
   display: flex;
@@ -20,6 +21,7 @@ export const Title = styled.span`
   color: ${(p) => p.theme.color.text01};
   letter-spacing: 0.04em;
   margin-bottom: 12px;
+  text-align: center;
 `
 
 export const PanelIcon = styled.div`
@@ -43,7 +45,7 @@ export const Column = styled.div`
   margin-bottom: 8px;
 `
 
-export const RestoreButton = styled.button`
+export const RestoreButton = styled(WalletButton)`
   display: flex;
   align-items: center;
   justify-content: center;

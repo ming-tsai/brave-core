@@ -4,13 +4,13 @@
 // you can obtain one at http://mozilla.org/MPL/2.0/.
 
 import { SimpleActionCreator } from 'redux-act'
+import BigNumber from 'bignumber.js'
 
 import AsyncActionHandler from '../../../common/AsyncActionHandler'
 import * as WalletActions from '../actions/wallet_actions'
 import {
   AddUserAssetPayloadType,
   ChainChangedEventPayloadType,
-  InitializedPayloadType,
   RemoveSitePermissionPayloadType,
   RemoveUserAssetPayloadType,
   SetUserAssetVisiblePayloadType,
@@ -23,7 +23,7 @@ import {
   TransactionStatusChanged
 } from '../constants/action_types'
 import {
-  AppObjectType,
+  AppItem,
   ApproveERC20Params,
   AssetPriceTimeframe,
   ER20TransferParams,
@@ -33,16 +33,17 @@ import {
   SwapErrorResponse,
   SwapResponse,
   TransactionInfo,
+  TxData,
+  TxData1559,
   WalletAccountType,
   WalletState,
+  WalletInfo,
   TransactionStatus
 } from '../../constants/types'
 import { toWeiHex } from '../../utils/format-balances'
-import getSwapConfig from '../../constants/swap.config'
 import { hexStrToNumberArray } from '../../utils/hex-utils'
 import getAPIProxy from './bridge'
 import {
-  findHardwareAccountInfo,
   refreshKeyringInfo,
   refreshNetworkInfo,
   refreshTokenPriceHistory,
@@ -51,8 +52,11 @@ import {
   refreshBalancesAndPrices
 } from './lib'
 import { Store } from './types'
+import InteractionNotifier from './interactionNotifier'
 
 const handler = new AsyncActionHandler()
+
+const interactionNotifier = new InteractionNotifier()
 
 function getWalletState (store: Store): WalletState {
   return store.getState().wallet
@@ -65,11 +69,11 @@ async function refreshBalancesPricesAndHistory (store: Store) {
 }
 
 async function refreshWalletInfo (store: Store) {
-  const apiProxy = await getAPIProxy()
+  const apiProxy = getAPIProxy()
   const state = getWalletState(store)
 
   await store.dispatch(refreshKeyringInfo())
-  const currentNetwork = await store.dispatch(refreshNetworkInfo())
+  await store.dispatch(refreshNetworkInfo())
 
   // Populate tokens from ERC-20 token registry.
   if (state.fullTokenList.length === 0) {
@@ -83,15 +87,13 @@ async function refreshWalletInfo (store: Store) {
   const mmResult = await braveWalletService.isMetaMaskInstalled()
   store.dispatch(WalletActions.setMetaMaskInstalled(mmResult.installed))
 
-  await store.dispatch(refreshBalancesAndPrices(currentNetwork))
-  await store.dispatch(refreshTokenPriceHistory(state.selectedPortfolioTimeline))
   await store.dispatch(refreshTransactionHistory())
   await store.dispatch(refreshSitePermissions())
 }
 
 async function updateAccountInfo (store: Store) {
   const state = getWalletState(store)
-  const apiProxy = await getAPIProxy()
+  const apiProxy = getAPIProxy()
   const { walletHandler } = apiProxy
   const walletInfo = await walletHandler.getWalletInfo()
   if (state.accounts.length === walletInfo.accountInfos.length) {
@@ -99,7 +101,6 @@ async function updateAccountInfo (store: Store) {
   } else {
     await refreshWalletInfo(store)
   }
-
 }
 
 handler.on(WalletActions.refreshBalancesAndPrices.getType(), async (store: Store) => {
@@ -110,7 +111,7 @@ handler.on(WalletActions.refreshBalancesAndPrices.getType(), async (store: Store
 
 handler.on(WalletActions.initialize.getType(), async (store) => {
   // Initialize active origin state.
-  const braveWalletService = (await getAPIProxy()).braveWalletService
+  const braveWalletService = getAPIProxy().braveWalletService
   const origin = await braveWalletService.getActiveOrigin()
   store.dispatch(WalletActions.activeOriginChanged(origin))
   await refreshWalletInfo(store)
@@ -129,6 +130,7 @@ handler.on(WalletActions.keyringRestored.getType(), async (store) => {
 })
 
 handler.on(WalletActions.locked.getType(), async (store) => {
+  interactionNotifier.stopWatchingForInteraction()
   await refreshWalletInfo(store)
 })
 
@@ -156,43 +158,57 @@ handler.on(WalletActions.defaultWalletChanged.getType(), async (store) => {
 // handler.on(WalletActions.defaultBaseCryptocurrencyChanged.getType(), async (store, payload: DefaultBaseCryptocurrencyChanged) => {})
 
 handler.on(WalletActions.lockWallet.getType(), async (store) => {
-  const keyringController = (await getAPIProxy()).keyringController
-  await keyringController.lock()
+  const keyringController = getAPIProxy().keyringController
+  keyringController.lock()
 })
 
 handler.on(WalletActions.unlockWallet.getType(), async (store: Store, payload: UnlockWalletPayloadType) => {
-  const keyringController = (await getAPIProxy()).keyringController
+  const keyringController = getAPIProxy().keyringController
   const result = await keyringController.unlock(payload.password)
   store.dispatch(WalletActions.hasIncorrectPassword(!result.success))
 })
 
-handler.on(WalletActions.addFavoriteApp.getType(), async (store: Store, appItem: AppObjectType) => {
-  const walletHandler = (await getAPIProxy()).walletHandler
-  await walletHandler.addFavoriteApp(appItem)
+handler.on(WalletActions.addFavoriteApp.getType(), async (store: Store, appItem: AppItem) => {
+  const walletHandler = getAPIProxy().walletHandler
+  walletHandler.addFavoriteApp(appItem)
   await refreshWalletInfo(store)
 })
 
-handler.on(WalletActions.removeFavoriteApp.getType(), async (store: Store, appItem: AppObjectType) => {
-  const walletHandler = (await getAPIProxy()).walletHandler
-  await walletHandler.removeFavoriteApp(appItem)
+handler.on(WalletActions.removeFavoriteApp.getType(), async (store: Store, appItem: AppItem) => {
+  const walletHandler = getAPIProxy().walletHandler
+  walletHandler.removeFavoriteApp(appItem)
   await refreshWalletInfo(store)
 })
 
 handler.on(WalletActions.selectNetwork.getType(), async (store: Store, payload: EthereumChain) => {
-  const ethJsonRpcController = (await getAPIProxy()).ethJsonRpcController
+  const ethJsonRpcController = getAPIProxy().ethJsonRpcController
   await ethJsonRpcController.setNetwork(payload.chainId)
   await refreshWalletInfo(store)
 })
 
 handler.on(WalletActions.selectAccount.getType(), async (store: Store, payload: WalletAccountType) => {
-  const { keyringController } = await getAPIProxy()
+  const { keyringController } = getAPIProxy()
 
   await keyringController.setSelectedAccount(payload.address)
-  await store.dispatch(WalletActions.setSelectedAccount(payload))
+  store.dispatch(WalletActions.setSelectedAccount(payload))
   await store.dispatch(refreshTransactionHistory(payload.address))
 })
 
-handler.on(WalletActions.initialized.getType(), async (store: Store, payload: InitializedPayloadType) => {
+handler.on(WalletActions.initialized.getType(), async (store: Store, payload: WalletInfo) => {
+  const keyringController = getAPIProxy().keyringController
+  const state = getWalletState(store)
+  if (!state.isWalletLocked) {
+    keyringController.notifyUserInteraction()
+  }
+  interactionNotifier.beginWatchingForInteraction(50000, state.isWalletLocked, async () => {
+    keyringController.notifyUserInteraction()
+  })
+  // Fetch Balances and Prices
+  if (!state.isWalletLocked && state.isWalletCreated) {
+    const currentNetwork = await store.dispatch(refreshNetworkInfo())
+    await store.dispatch(refreshBalancesAndPrices(currentNetwork))
+    await store.dispatch(refreshTokenPriceHistory(state.selectedPortfolioTimeline))
+  }
   // This can be 0 when the wallet is locked
   if (payload.selectedAccount) {
     await store.dispatch(refreshTransactionHistory(payload.selectedAccount))
@@ -200,43 +216,43 @@ handler.on(WalletActions.initialized.getType(), async (store: Store, payload: In
 })
 
 handler.on(WalletActions.getAllNetworks.getType(), async (store) => {
-  const ethJsonRpcController = (await getAPIProxy()).ethJsonRpcController
+  const ethJsonRpcController = getAPIProxy().ethJsonRpcController
   const fullList = await ethJsonRpcController.getAllNetworks()
   store.dispatch(WalletActions.setAllNetworks(fullList))
 })
 
 handler.on(WalletActions.getAllTokensList.getType(), async (store) => {
-  const ercTokenRegistry = (await getAPIProxy()).ercTokenRegistry
+  const ercTokenRegistry = getAPIProxy().ercTokenRegistry
   const fullList = await ercTokenRegistry.getAllTokens()
   store.dispatch(WalletActions.setAllTokensList(fullList))
 })
 
 handler.on(WalletActions.addUserAsset.getType(), async (store: Store, payload: AddUserAssetPayloadType) => {
-  const braveWalletService = (await getAPIProxy()).braveWalletService
+  const braveWalletService = getAPIProxy().braveWalletService
   const result = await braveWalletService.addUserAsset(payload.token, payload.chainId)
   store.dispatch(WalletActions.addUserAssetError(!result.success))
   await refreshBalancesPricesAndHistory(store)
 })
 
 handler.on(WalletActions.removeUserAsset.getType(), async (store: Store, payload: RemoveUserAssetPayloadType) => {
-  const braveWalletService = (await getAPIProxy()).braveWalletService
+  const braveWalletService = getAPIProxy().braveWalletService
   await braveWalletService.removeUserAsset(payload.token, payload.chainId)
   await refreshBalancesPricesAndHistory(store)
 })
 
 handler.on(WalletActions.setUserAssetVisible.getType(), async (store: Store, payload: SetUserAssetVisiblePayloadType) => {
-  const braveWalletService = (await getAPIProxy()).braveWalletService
+  const braveWalletService = getAPIProxy().braveWalletService
   await braveWalletService.setUserAssetVisible(payload.token, payload.chainId, payload.isVisible)
   await refreshBalancesPricesAndHistory(store)
 })
 
 handler.on(WalletActions.selectPortfolioTimeline.getType(), async (store: Store, payload: AssetPriceTimeframe) => {
-  await store.dispatch(WalletActions.portfolioTimelineUpdated(payload))
+  store.dispatch(WalletActions.portfolioTimelineUpdated(payload))
   await store.dispatch(refreshTokenPriceHistory(payload))
 })
 
 handler.on(WalletActions.sendTransaction.getType(), async (store: Store, payload: SendTransactionParams) => {
-  const apiProxy = await getAPIProxy()
+  const apiProxy = getAPIProxy()
   /***
    * Determine whether to create a legacy or EIP-1559 transaction.
    *
@@ -282,46 +298,36 @@ handler.on(WalletActions.sendTransaction.getType(), async (store: Store, payload
 
   const { chainId } = await apiProxy.ethJsonRpcController.getChainId()
 
-  const txData = isEIP1559
-    ? apiProxy.makeEIP1559TxData(
+  let addResult
+  const txData: TxData = {
+    nonce: '',
+    // Estimated by eth_tx_controller if value is '' for legacy transactions
+    gasPrice: isEIP1559 ? '' : payload.gasPrice || '',
+    // Estimated by eth_tx_controller if value is ''
+    gasLimit: payload.gas || '',
+    to: payload.to,
+    value: payload.value,
+    data: payload.data || []
+  }
+
+  if (isEIP1559) {
+    const txData1559: TxData1559 = {
+      baseData: txData,
       chainId,
-      '' /* nonce */,
-
       // Estimated by eth_tx_controller if value is ''
-      payload.maxPriorityFeePerGas || '',
-
+      maxPriorityFeePerGas: payload.maxPriorityFeePerGas || '',
       // Estimated by eth_tx_controller if value is ''
-      payload.maxFeePerGas || '',
+      maxFeePerGas: payload.maxFeePerGas || '',
+      gasEstimation: undefined
+    }
+    addResult = await apiProxy.ethTxController.addUnapproved1559Transaction(txData1559, payload.from)
+  } else {
+    addResult = await apiProxy.ethTxController.addUnapprovedTransaction(txData, payload.from)
+  }
 
-      // Estimated by eth_tx_controller if value is ''
-      // FIXME: using empty string to auto-estimate gas limit throws the error:
-      //  "Failed to get the gas limit for the transaction"
-      payload.gas || '',
-      payload.to,
-      payload.value,
-      payload.data || []
-    )
-    : apiProxy.makeTxData(
-      '' /* nonce */,
-
-      // Estimated by eth_tx_controller if value is ''
-      payload.gasPrice || '',
-
-      // Estimated by eth_tx_controller if value is ''
-      payload.gas || '',
-      payload.to,
-      payload.value,
-      payload.data || []
-    )
-
-  const addResult = await (
-    isEIP1559
-      ? apiProxy.ethTxController.addUnapproved1559Transaction(txData, payload.from)
-      : apiProxy.ethTxController.addUnapprovedTransaction(txData, payload.from)
-  )
   if (!addResult.success) {
     console.log(
-      `Sending unapproved transaction failed: ` +
+      'Sending unapproved transaction failed: ' +
       `from=${payload.from} err=${addResult.errorMessage} txData=`, txData
     )
     return
@@ -332,7 +338,7 @@ handler.on(WalletActions.sendTransaction.getType(), async (store: Store, payload
 })
 
 handler.on(WalletActions.sendERC20Transfer.getType(), async (store: Store, payload: ER20TransferParams) => {
-  const apiProxy = await getAPIProxy()
+  const apiProxy = getAPIProxy()
   const { data, success } = await apiProxy.ethTxController.makeERC20TransferData(payload.to, payload.value)
   if (!success) {
     console.log('Failed making ERC20 transfer data, to: ', payload.to, ', value: ', payload.value)
@@ -352,7 +358,7 @@ handler.on(WalletActions.sendERC20Transfer.getType(), async (store: Store, paylo
 })
 
 handler.on(WalletActions.sendERC721TransferFrom.getType(), async (store: Store, payload: ERC721TransferFromParams) => {
-  const apiProxy = await getAPIProxy()
+  const apiProxy = getAPIProxy()
   const { data, success } = await apiProxy.ethTxController.makeERC721TransferFromData(payload.from, payload.to, payload.tokenId, payload.contractAddress)
   if (!success) {
     console.log('Failed making ERC721 transferFrom data, from: ', payload.from, ', to: ', payload.to, ', tokenId: ', payload.tokenId)
@@ -372,7 +378,7 @@ handler.on(WalletActions.sendERC721TransferFrom.getType(), async (store: Store, 
 })
 
 handler.on(WalletActions.approveERC20Allowance.getType(), async (store: Store, payload: ApproveERC20Params) => {
-  const apiProxy = await getAPIProxy()
+  const apiProxy = getAPIProxy()
   const { data, success } = await apiProxy.ethTxController.makeERC20ApproveData(payload.spenderAddress, payload.allowance)
   if (!success) {
     console.log(
@@ -393,32 +399,20 @@ handler.on(WalletActions.approveERC20Allowance.getType(), async (store: Store, p
 })
 
 handler.on(WalletActions.approveTransaction.getType(), async (store: Store, txInfo: TransactionInfo) => {
-  const apiProxy = await getAPIProxy()
-  const hardwareAccount = await findHardwareAccountInfo(txInfo.fromAddress)
-  if (hardwareAccount && hardwareAccount.hardware) {
-    const { success, message } = await apiProxy.ethTxController.approveHardwareTransaction(txInfo.id)
-    if (success) {
-      let deviceKeyring = await apiProxy.getKeyringsByType(hardwareAccount.hardware.vendor)
-      const { v, r, s } = await deviceKeyring.signTransaction(hardwareAccount.hardware.path, message.replace('0x', ''))
-      await apiProxy.ethTxController.processLedgerSignature(txInfo.id, '0x' + v, r, s)
-      await refreshWalletInfo(store)
-    }
-    return
-  }
-
+  const apiProxy = getAPIProxy()
   await apiProxy.ethTxController.approveTransaction(txInfo.id)
   await refreshWalletInfo(store)
 })
 
 handler.on(WalletActions.rejectTransaction.getType(), async (store: Store, txInfo: TransactionInfo) => {
-  const apiProxy = await getAPIProxy()
+  const apiProxy = getAPIProxy()
   await apiProxy.ethTxController.rejectTransaction(txInfo.id)
   await refreshWalletInfo(store)
 })
 
 handler.on(WalletActions.rejectAllTransactions.getType(), async (store) => {
   const state = getWalletState(store)
-  const apiProxy = await getAPIProxy()
+  const apiProxy = getAPIProxy()
   state.pendingTransactions.forEach(async (transaction) => {
     await apiProxy.ethTxController.rejectTransaction(transaction.id)
   })
@@ -431,7 +425,7 @@ export const fetchSwapQuoteFactory = (
   setSwapQuote: SimpleActionCreator<SwapResponse>,
   setSwapError: SimpleActionCreator<SwapErrorResponse | undefined>
 ) => async (store: Store, payload: SwapParamsPayloadType) => {
-  const swapController = (await getAPIProxy()).swapController
+  const { swapController, assetRatioController } = getAPIProxy()
 
   const {
     fromAsset,
@@ -443,17 +437,13 @@ export const fetchSwapQuoteFactory = (
     full
   } = payload
 
-  const config = getSwapConfig(payload.networkChainId)
-
   const swapParams = {
     takerAddress: accountAddress,
     sellAmount: fromAssetAmount || '',
     buyAmount: toAssetAmount || '',
     buyToken: toAsset.asset.contractAddress || toAsset.asset.symbol,
     sellToken: fromAsset.asset.contractAddress || fromAsset.asset.symbol,
-    buyTokenPercentageFee: config.buyTokenPercentageFee,
     slippagePercentage: slippageTolerance.slippage / 100,
-    feeRecipient: config.feeRecipient,
     gasPrice: ''
   }
 
@@ -473,12 +463,33 @@ export const fetchSwapQuoteFactory = (
         estimatedGas
       } = quote.response
 
+      // Get the latest gas estimates, since we'll force the fastest fees in
+      // order to ensure a swap with minimum slippage.
+      const { estimation: gasEstimates } = await assetRatioController.getGasOracle()
+
+      let maxPriorityFeePerGas
+      let maxFeePerGas
+      if (gasEstimates && gasEstimates.fastMaxPriorityFeePerGas === gasEstimates.avgMaxPriorityFeePerGas) {
+        // Bump fast priority fee and max fee by 1 GWei if same as average fees.
+        const maxPriorityFeePerGasBN = new BigNumber(gasEstimates.fastMaxPriorityFeePerGas).plus(10 ** 9)
+        const maxFeePerGasBN = new BigNumber(gasEstimates.fastMaxFeePerGas).plus(10 ** 9)
+
+        maxPriorityFeePerGas = `0x${maxPriorityFeePerGasBN.toString(16)}`
+        maxFeePerGas = `0x${maxFeePerGasBN.toString(16)}`
+      } else if (gasEstimates) {
+        // Always suggest fast gas fees as default
+        maxPriorityFeePerGas = gasEstimates.fastMaxPriorityFeePerGas
+        maxFeePerGas = gasEstimates.fastMaxFeePerGas
+      }
+
       const params = {
         from: accountAddress,
         to,
         value: toWeiHex(value, 0),
         gas: toWeiHex(estimatedGas, 0),
-        data: hexStrToNumberArray(data)
+        data: hexStrToNumberArray(data),
+        maxPriorityFeePerGas,
+        maxFeePerGas
       }
 
       store.dispatch(WalletActions.sendTransaction(params))
@@ -495,16 +506,11 @@ export const fetchSwapQuoteFactory = (
   }
 }
 
-handler.on(WalletActions.notifyUserInteraction.getType(), async (store) => {
-  const keyringController = (await getAPIProxy()).keyringController
-  await keyringController.notifyUserInteraction()
-})
-
 handler.on(WalletActions.refreshGasEstimates.getType(), async (store) => {
-  const assetPriceController = (await getAPIProxy()).assetRatioController
+  const assetPriceController = getAPIProxy().assetRatioController
   const basicEstimates = await assetPriceController.getGasOracle()
   if (!basicEstimates.estimation) {
-    console.error(`Failed to fetch gas estimates`)
+    console.error('Failed to fetch gas estimates')
     return
   }
 
@@ -512,7 +518,7 @@ handler.on(WalletActions.refreshGasEstimates.getType(), async (store) => {
 })
 
 handler.on(WalletActions.updateUnapprovedTransactionGasFields.getType(), async (store: Store, payload: UpdateUnapprovedTransactionGasFieldsType) => {
-  const apiProxy = await getAPIProxy()
+  const apiProxy = getAPIProxy()
 
   const isEIP1559 = payload.maxPriorityFeePerGas !== undefined && payload.maxFeePerGas !== undefined
 
@@ -526,7 +532,7 @@ handler.on(WalletActions.updateUnapprovedTransactionGasFields.getType(), async (
 
     if (!result.success) {
       console.error(
-        `Failed to update unapproved transaction: ` +
+        'Failed to update unapproved transaction: ' +
         `id=${payload.txMetaId} ` +
         `maxPriorityFeePerGas=${payload.maxPriorityFeePerGas}` +
         `maxFeePerGas=${payload.maxFeePerGas}` +
@@ -542,7 +548,7 @@ handler.on(WalletActions.updateUnapprovedTransactionGasFields.getType(), async (
 
     if (!result.success) {
       console.error(
-        `Failed to update unapproved transaction: ` +
+        'Failed to update unapproved transaction: ' +
         `id=${payload.txMetaId} ` +
         `gasPrice=${payload.gasPrice}` +
         `gasLimit=${payload.gasLimit}`
@@ -552,7 +558,7 @@ handler.on(WalletActions.updateUnapprovedTransactionGasFields.getType(), async (
 })
 
 handler.on(WalletActions.updateUnapprovedTransactionSpendAllowance.getType(), async (store: Store, payload: UpdateUnapprovedTransactionSpendAllowanceType) => {
-  const apiProxy = await getAPIProxy()
+  const apiProxy = getAPIProxy()
 
   const { data, success } = await apiProxy.ethTxController.makeERC20ApproveData(payload.spenderAddress, payload.allowance)
   if (!success) {
@@ -566,7 +572,7 @@ handler.on(WalletActions.updateUnapprovedTransactionSpendAllowance.getType(), as
   const result = await apiProxy.ethTxController.setDataForUnapprovedTransaction(payload.txMetaId, data)
   if (!result.success) {
     console.error(
-      `Failed to update unapproved transaction: ` +
+      'Failed to update unapproved transaction: ' +
       `id=${payload.txMetaId} ` +
       `allowance=${payload.allowance}`
     )
@@ -574,7 +580,7 @@ handler.on(WalletActions.updateUnapprovedTransactionSpendAllowance.getType(), as
 })
 
 handler.on(WalletActions.removeSitePermission.getType(), async (store: Store, payload: RemoveSitePermissionPayloadType) => {
-  const braveWalletService = (await getAPIProxy()).braveWalletService
+  const braveWalletService = getAPIProxy().braveWalletService
   await braveWalletService.resetEthereumPermission(payload.origin, payload.account)
   await refreshWalletInfo(store)
 })
@@ -583,6 +589,51 @@ handler.on(WalletActions.transactionStatusChanged.getType(), async (store: Store
   const status = payload.txInfo.txStatus
   if (status === TransactionStatus.Confirmed || status === TransactionStatus.Error) {
     await refreshBalancesPricesAndHistory(store)
+  }
+})
+
+handler.on(WalletActions.retryTransaction.getType(), async (store: Store, payload: TransactionInfo) => {
+  const { ethTxController } = getAPIProxy()
+  const result = await ethTxController.retryTransaction(payload.id)
+  if (!result.success) {
+    console.error(
+      'Retry transaction failed: ' +
+      `id=${payload.id} ` +
+      `err=${result.errorMessage}`
+    )
+  } else {
+    // Refresh the transaction history of the origin account.
+    await store.dispatch(refreshTransactionHistory(payload.fromAddress))
+  }
+})
+
+handler.on(WalletActions.speedupTransaction.getType(), async (store: Store, payload: TransactionInfo) => {
+  const { ethTxController } = getAPIProxy()
+  const result = await ethTxController.speedupOrCancelTransaction(payload.id, false)
+  if (!result.success) {
+    console.error(
+      'Speedup transaction failed: ' +
+      `id=${payload.id} ` +
+      `err=${result.errorMessage}`
+    )
+  } else {
+    // Refresh the transaction history of the origin account.
+    await store.dispatch(refreshTransactionHistory(payload.fromAddress))
+  }
+})
+
+handler.on(WalletActions.cancelTransaction.getType(), async (store: Store, payload: TransactionInfo) => {
+  const { ethTxController } = getAPIProxy()
+  const result = await ethTxController.speedupOrCancelTransaction(payload.id, true)
+  if (!result.success) {
+    console.error(
+      'Cancel transaction failed: ' +
+      `id=${payload.id} ` +
+      `err=${result.errorMessage}`
+    )
+  } else {
+    // Refresh the transaction history of the origin account.
+    await store.dispatch(refreshTransactionHistory(payload.fromAddress))
   }
 })
 

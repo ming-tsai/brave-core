@@ -2,14 +2,13 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* global window */
 
 import { createReducer } from 'redux-act'
 import * as Actions from '../actions/wallet_page_actions'
 import {
   PageState,
   AssetPriceTimeframe,
-  TokenInfo,
+  ERCToken,
   SwapResponse,
   SwapErrorResponse,
   ImportWalletError
@@ -104,7 +103,7 @@ reducer.on(Actions.hasMnemonicError, (state: PageState, payload: boolean) => {
   }
 })
 
-reducer.on(Actions.updateSelectedAsset, (state: PageState, payload: TokenInfo) => {
+reducer.on(Actions.updateSelectedAsset, (state: PageState, payload: ERCToken) => {
   return {
     ...state,
     selectedAsset: payload

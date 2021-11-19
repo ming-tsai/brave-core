@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "content/public/browser/web_contents_user_data.h"
 #include "url/gurl.h"
@@ -33,14 +34,18 @@ class BraveWalletTabHelper
   void ShowApproveWalletBubble();
   void CloseBubble();
   bool IsShowingBubble();
-  void ClosePanelOnDeactivate(bool close);
+  void SetCloseOnDeactivate(bool close);
   bool IsBubbleClosedForTesting();
   content::WebContents* GetBubbleWebContentsForTesting();
+  const std::vector<int32_t>& GetPopupIdsForTesting();
   void SetShowBubbleCallbackForTesting(base::OnceClosure callback) {
     show_bubble_callback_for_testing_ = std::move(callback);
   }
   bool CloseOnDeactivateForTesting() const {
     return close_on_deactivate_for_testing_;
+  }
+  void SetSkipDelegateForTesting(bool skip) {
+    skip_delegate_for_testing_ = skip;
   }
 #endif
 
@@ -51,6 +56,8 @@ class BraveWalletTabHelper
   GURL GetBubbleURL();
   base::OnceClosure show_bubble_callback_for_testing_;
   bool close_on_deactivate_for_testing_ = true;
+  bool is_showing_bubble_for_testing_ = false;
+  bool skip_delegate_for_testing_ = false;
   GURL GetApproveBubbleURL();
   std::unique_ptr<WalletBubbleManagerDelegate> wallet_bubble_manager_delegate_;
 #endif

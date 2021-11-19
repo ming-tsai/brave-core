@@ -23,8 +23,8 @@ import {
 import { HardwareWalletAccount, HardwareWalletConnectOpts, LedgerDerivationPaths, ErrorMessage, HardwareWalletDerivationPathsMapping } from './types'
 
 import {
-  kLedgerHardwareVendor,
-  kTrezorHardwareVendor
+  LEDGER_HARDWARE_VENDOR,
+  TREZOR_HARDWARE_VENDOR
 } from '../../../../../constants/types'
 
 import HardwareWalletAccountsList from './accounts-list'
@@ -38,9 +38,9 @@ export interface Props {
 const derivationBatch = 4
 
 export default function (props: Props) {
-  const [selectedHardwareWallet, setSelectedHardwareWallet] = React.useState<string>(kLedgerHardwareVendor)
+  const [selectedHardwareWallet, setSelectedHardwareWallet] = React.useState<string>(LEDGER_HARDWARE_VENDOR)
   const [isConnecting, setIsConnecting] = React.useState<boolean>(false)
-  const [accounts, setAccounts] = React.useState<Array<HardwareWalletAccount>>([])
+  const [accounts, setAccounts] = React.useState<HardwareWalletAccount[]>([])
   const [selectedDerivationPaths, setSelectedDerivationPaths] = React.useState<string[]>([])
   const [connectionError, setConnectionError] = React.useState<ErrorMessage | undefined>(undefined)
   const [selectedDerivationScheme, setSelectedDerivationScheme] = React.useState<string>(
@@ -48,11 +48,11 @@ export default function (props: Props) {
   )
 
   const getErrorMessage = (error: any) => {
-    if (error.statusCode && error.statusCode === 27404) {  // Unknown Error
+    if (error.statusCode && error.statusCode === 27404) { // Unknown Error
       return { error: getLocale('braveWalletConnectHardwareInfo2'), userHint: '' }
     }
 
-    if (error.statusCode && (error.statusCode === 27904 || error.statusCode === 26368)) {  // INCORRECT_LENGTH or INS_NOT_SUPPORTED
+    if (error.statusCode && (error.statusCode === 27904 || error.statusCode === 26368)) { // INCORRECT_LENGTH or INS_NOT_SUPPORTED
       return { error: error.message, userHint: getLocale('braveWalletConnectHardwareWrongApplicationUserHint') }
     }
 
@@ -109,11 +109,11 @@ export default function (props: Props) {
   }
 
   const onSelectLedger = () => {
-    selectVendor(kLedgerHardwareVendor)
+    selectVendor(LEDGER_HARDWARE_VENDOR)
   }
 
   const onSelectTrezor = () => {
-    selectVendor(kTrezorHardwareVendor)
+    selectVendor(TREZOR_HARDWARE_VENDOR)
   }
 
   const onSubmit = () => onConnectHardwareWallet(selectedHardwareWallet)
@@ -142,10 +142,10 @@ export default function (props: Props) {
     <>
       <HardwareTitle>{getLocale('braveWalletConnectHardwareTitle')}</HardwareTitle>
       <HardwareButtonRow>
-        <HardwareButton onClick={onSelectLedger} isSelected={selectedHardwareWallet === kLedgerHardwareVendor}>
+        <HardwareButton onClick={onSelectLedger} isSelected={selectedHardwareWallet === LEDGER_HARDWARE_VENDOR}>
           <LedgerIcon />
         </HardwareButton>
-        <HardwareButton onClick={onSelectTrezor} isSelected={selectedHardwareWallet === kTrezorHardwareVendor}>
+        <HardwareButton onClick={onSelectTrezor} isSelected={selectedHardwareWallet === TREZOR_HARDWARE_VENDOR}>
           <TrezorIcon />
         </HardwareButton>
       </HardwareButtonRow>

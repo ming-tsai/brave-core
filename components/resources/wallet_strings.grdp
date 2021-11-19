@@ -5,10 +5,12 @@
   <message name="IDS_BRAVE_WALLET" desc="The name of the feature Brave Wallet">Brave Wallet</message>
   <message name="IDS_WALLET_USER_REJECTED_REQUEST" desc="The text of the response for brave provider call if the user rejected the request">The user rejected the request.</message>
   <message name="IDS_WALLET_INVALID_PARAMETERS" desc="The text of the response for wallet_addEthereumChain call with invalid parameters">Invalid parameters.</message>
+  <message name="IDS_WALLET_UNKNOWN_CHAIN" desc="The text of the response for wallet_switchEthereumChain call with unknown">Chain <ph name="VALUE">$1<ex>1</ex></ph> hasn't been added</message>
   <message name="IDS_WALLET_EXPECTED_SINGLE_PARAMETER" desc="The text of the response for wallet_addEthereumChain call with empty parameters">Expected single, object parameter.</message>
   <message name="IDS_WALLET_CHAIN_EXISTS" desc="The text of the response for wallet_addEthereumChain call with existing chain id">This Chain ID is currently used</message>
   <message name="IDS_WALLET_INTERNAL_ERROR" desc="The text of the response for wallet_addEthereumChain call with internal error">An internal error has occurred</message>
-  <message name="IDS_WALLET_ALREADY_IN_PROGRESS_ERROR" desc="The text of the response for wallet_addEthereumChain call for existing request">A request is already in progress</message>
+  <message name="IDS_WALLET_INVALID_MNEMONIC_ERROR" desc="The text for invalid mnemonic being imported error">The mnemonic being imported is not valid for Brave Wallet</message>
+  <message name="IDS_WALLET_ALREADY_IN_PROGRESS_ERROR" desc="The text of the response for wallet_(add|switch)EthereumChain call for existing request">A request is already in progress</message>
   <message name="IDS_WALLET_ETH_SEND_TRANSACTION_NO_TX_DATA" desc="The text of the response for eth_sendTransaction">Transaction data is missing</message>
   <message name="IDS_WALLET_ETH_SEND_TRANSACTION_FROM_NOT_AUTHED" desc="The text of the response for eth_sendTransaction">'from' is not authorized to send transactions</message>
   <message name="IDS_WALLET_ETH_SEND_TRANSACTION_TO_OR_DATA" desc="Transaction data is not validated">Transaction data 'to' or 'data' must be specified</message>
@@ -68,6 +70,7 @@
   <message name="IDS_BRAVE_WALLET_PRICE" desc="Portfolio Price title">Price</message>
   <message name="IDS_BRAVE_WALLET_BACK" desc="General back button">Back</message>
   <message name="IDS_BRAVE_WALLET_ADD_ACCOUNT" desc="Portfolio Add Account button">Add Account</message>
+  <message name="IDS_BRAVE_WALLET_POWERED_BY_COIN_GECKO" desc="Disclaimer on assets details page for GoinGecko contract agreement">Price data powered by CoinGecko</message>
   <message name="IDS_BRAVE_WALLET_BUY" desc="Buy tab button">Buy</message>
   <message name="IDS_BRAVE_WALLET_SEND" desc="Send tab button">Send</message>
   <message name="IDS_BRAVE_WALLET_SWAP" desc="Swap tab button">Swap</message>
@@ -76,6 +79,8 @@
   <message name="IDS_BRAVE_WALLET_SLIPPAGE_TOLERANCE_TITLE" desc="BuySendSwapo slippage tolerance title">Slippage tolerance</message>
   <message name="IDS_BRAVE_WALLET_EXPIRES_IN_TITLE" desc="BuySendSwap expires in title">Expires in</message>
   <message name="IDS_BRAVE_WALLET_SEND_PLACEHOLDER" desc="BuySendSwap send placeholder">0x address or url</message>
+  <message name="IDS_BRAVE_WALLET_SWAP_DISCLAIMER" desc="Swap 0x Security and Privacy Disclaimer">Brave uses <ph name="LINK_BEFORE">$1</ph>0x<ph name="LINK_AFTER">$2</ph> as a DEX aggregator.</message>
+  <message name="IDS_BRAVE_WALLET_SWAP_DISCLAIMER_DESCRIPTION" desc="Swap 0x Security and Privacy Disclaimer Description">0x will process the Ethereum address and IP address to fulfill a transaction (including getting quotes). 0x will ONLY use this data for the purposes of processing transactions.</message>
   <message name="IDS_BRAVE_WALLET_BUTTON_CONTINUE" desc="General Continue button">Continue</message>
   <message name="IDS_BRAVE_WALLET_BUTTON_COPY" desc="General Copy button">Copy</message>
   <message name="IDS_BRAVE_WALLET_BUTTON_VERIFY" desc="General Verify button">Verify</message>
@@ -277,8 +282,18 @@
   <message name="IDS_BRAVE_WALLET_TRANSACTION_RECEIVED" desc="Transaction received label">received</message>
   <message name="IDS_BRAVE_WALLET_TRANSACTION_EXPLORER_MISSING" desc="Alert for when no block explorer is available">Block explorer URL is not available.</message>
   <message name="IDS_BRAVE_WALLET_TRANSACTION_EXPLORER" desc="View on block explorer button">View on block explorer</message>
+  <message name="IDS_BRAVE_WALLET_TRANSACTION_SPEEDUP" desc="Speedup transaction button">Speedup transaction</message>
+  <message name="IDS_BRAVE_WALLET_TRANSACTION_CANCEL" desc="Cancel transaction button">Cancel transaction</message>
+  <message name="IDS_BRAVE_WALLET_TRANSACTION_RETRY" desc="Retry transaction button">Retry transaction</message>
   <message name="IDS_BRAVE_WALLET_TRANSACTION_PLACEHOLDER" desc="Transactions placeholder">Transactions will appear here</message>
+  <message name="IDS_BRAVE_WALLET_TRANSACTION_APPROVE_UNLIMITED" desc="Transaction Approve Unlimited Spend">Unlimited</message>
   <message name="IDS_BRAVE_WALLET_TRANSACTION_NOT_FOUND" desc="Transaction not found error">Transaction not found</message>
+  <message name="IDS_BRAVE_WALLET_TRANSACTION_STATUS_UNAPPROVED" desc="Status label for unapproved transaction">Unapproved</message>
+  <message name="IDS_BRAVE_WALLET_TRANSACTION_STATUS_APPROVED" desc="Status label for approved transaction">Approved</message>
+  <message name="IDS_BRAVE_WALLET_TRANSACTION_STATUS_REJECTED" desc="Status label for rejected transaction">Rejected</message>
+  <message name="IDS_BRAVE_WALLET_TRANSACTION_STATUS_SUBMITTED" desc="Status label for submitted transaction">Submitted</message>
+  <message name="IDS_BRAVE_WALLET_TRANSACTION_STATUS_CONFIRMED" desc="Status label for confirmed transaction">Confirmed</message>
+  <message name="IDS_BRAVE_WALLET_TRANSACTION_STATUS_ERROR" desc="Status label for error transaction">Error</message>
   <message name="IDS_BRAVE_WALLET_EDIT_GAS_TITLE1" desc="Edit gas panel max fee label">Max priority fee</message>
   <message name="IDS_BRAVE_WALLET_EDIT_GAS_TITLE2" desc="Edit gas panel edit gas button">Edit gas</message>
   <message name="IDS_BRAVE_WALLET_EDIT_GAS_DESCRIPTION" desc="Edit gas panel description">While not a guarantee, miners will likely prioritize your transaction if you pay a higher fee.</message>
@@ -303,6 +318,8 @@
   <message name="IDS_BRAVE_WALLET_NOT_VALID_ETH_ADDRESS" desc="Send input not valid ETH address error">Not a valid ETH address</message>
   <message name="IDS_BRAVE_WALLET_NOT_VALID_ADDRESS" desc="Send input not valid address error">Not a valid address</message>
   <message name="IDS_BRAVE_WALLET_NOT_DOMAIN" desc="Send input not registered domain error">Domain <ph name="DOMAIN_NAME"><ex>doug.wallet</ex>$1</ph> is not registered</message>
+  <message name="IDS_BRAVE_WALLET_SAME_ADDRESS_ERROR" desc="Send input trying to send crypto to their own address">The receiving address is your own address</message>
+  <message name="IDS_BRAVE_WALLET_CONTRACT_ADDRESS_ERROR" desc="Send input trying to send crypto to a tokens contract address">The receiving address is a token's contract address</message>
   <message name="IDS_BRAVE_WALLET_QUEUE_OF" desc="Confirm Transaction Queue of">of</message>
   <message name="IDS_BRAVE_WALLET_QUEUE_NEXT" desc="Confirm Transaction Queue next">next</message>
   <message name="IDS_BRAVE_WALLET_QUEUE_FIRST" desc="Confirm Transaction Queue first">first</message>
@@ -325,6 +342,17 @@
   <message name="IDS_BRAVE_WALLET_IMPORT_JSON_ERROR" desc="Importer error message">JSON data is not expected</message>
   <message name="IDS_BRAVE_WALLET_IMPORT_PASSWORD_ERROR" desc="Importer error message">Password is not correct</message>
   <message name="IDS_BRAVE_WALLET_IMPORT_INTERNAL_ERROR" desc="Importer error message">Internal error</message>
-  <message name="IDS_BRAVE_WALLET_HARDWARE_CREATE_BRIDGE_ERROR" desc="Hardware wallet error when access Trezor bridge">Internal error, unable to create iframe bridget</message>
+  <message name="IDS_BRAVE_WALLET_HARDWARE_CREATE_BRIDGE_ERROR" desc="Hardware wallet error when access Trezor bridge">Unable to connect to the Trezor bridge</message>
   <message name="IDS_BRAVE_WALLET_HARDWARE_ACCOUNTS_IMPORT_ERROR" desc="Hardware wallet error when importing accounts from Trezor device">Internal error, Unable to fetch accounts</message>
+  <message name="IDS_BRAVE_WALLET_NETWORK_EDIT" desc="Edit custom network button title">Edit</message>
+  <message name="IDS_BRAVE_WALLET_NETWORK_REMOVE" desc="Remove custom network button title">Remove</message>
+  <message name="IDS_BRAVE_WALLET_HARDWARE_PROCESS_TRANSACTION_ERROR" desc="Process transaction error when signing transactions with hardware device">Error processing the transaction</message>
+  <message name="IDS_BRAVE_WALLET_HARDWARE_APPROVE_TRANSACTION_ERROR" desc="Unable to approve hardware transaction during signing process">Error processing the transaction</message>
+  <message name="IDS_BRAVE_WALLET_HARDWARE_TRANSACTION_NOT_FOUND_ERROR" desc="Unable to find hardware transaction during signing process">Unable to find hardware transaction, please try again</message>
+  <message name="IDS_BRAVE_WALLET_HARDWARE_TRANSACTION_DEVICE_ERROR" desc="Received error from hardware device during signing process">Received error from hardware device, probably you need to confirm the transaction on your device</message>
+  <message name="IDS_BRAVE_WALLET_HARDWARE_TRANSACTION_NO_MESSAGE_TO_SIGN_ERROR" desc="Unable to get raw messagse to sign for hardware transaction during signing process">Error processing the transaction, please try again</message>
+  <message name="IDS_BRAVE_WALLET_HARDWARE_SIGN_MESSAGE_ERROR" desc="Unable to sign personal messagse on hardware device">Error signing message, please try again</message>
+  <message name="IDS_BRAVE_WALLET_HARDWARE_UNKNOWN_KEYRING_ERROR" desc="Error when requested unknown keyring">Error signing message, unknown keyring requested, please try again</message>
+  <message name="IDS_BRAVE_WALLET_HARDWARE_COMMAND_IN_PROGRESS_ERROR" desc="Error when command Trezor is already in progress">Trezor command is already in progress</message>
+  <message name="IDS_BRAVE_WALLET_HARDWARE_BRIDGE_NOT_READY_ERROR" desc="Error when Trezor bridge is not ready">Trezor bridge is not ready</message>
 </grit-part>

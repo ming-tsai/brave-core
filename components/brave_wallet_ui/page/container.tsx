@@ -33,11 +33,12 @@ import {
   AssetPriceTimeframe,
   AccountAssetOptionType,
   WalletAccountType,
-  TokenInfo,
+  ERCToken,
   UpdateAccountNamePayloadType,
   EthereumChain,
   WalletRoutes,
-  BuySendSwapTypes
+  BuySendSwapTypes,
+  TransactionInfo
 } from '../constants/types'
 // import { NavOptions } from '../options/side-nav-options'
 import BuySendSwap from '../stories/screens/buy-send-swap'
@@ -45,7 +46,7 @@ import Onboarding from '../stories/screens/onboarding'
 import BackupWallet from '../stories/screens/backup-wallet'
 import { formatWithCommasAndDecimals } from '../utils/format-prices'
 import { BuyAssetUrl } from '../utils/buy-asset-url'
-import { convertMojoTimeToJS } from '../utils/datetime-utils'
+import { mojoTimeDeltaToJSDate } from '../utils/datetime-utils'
 import { WyreAccountAssetOptions } from '../options/wyre-asset-options'
 import {
   HardwareWalletAccount
@@ -60,7 +61,7 @@ import {
 } from '../common/async/lib'
 
 import { formatBalance } from '../utils/format-balances'
-import { useSwap, useAssets, useTimeout, useBalance, useSend, usePreset } from '../common/hooks'
+import { useSwap, useAssets, useBalance, useSend, usePreset } from '../common/hooks'
 import { stripERC20TokenImageURL } from '../utils/string-utils'
 
 type Props = {
@@ -118,11 +119,6 @@ function Container (props: Props) {
   const [inputValue, setInputValue] = React.useState<string>('')
   const [buyAmount, setBuyAmount] = React.useState('')
   const [selectedWidgetTab, setSelectedWidgetTab] = React.useState<BuySendSwapTypes>('buy')
-
-  const notifyUserInteraction = () => {
-    props.walletActions.notifyUserInteraction()
-  }
-  useTimeout(notifyUserInteraction, isWalletLocked)
 
   const {
     tokenOptions,
@@ -184,7 +180,8 @@ function Container (props: Props) {
     selectedAccount,
     props.walletActions.sendERC20Transfer,
     props.walletActions.sendTransaction,
-    props.walletActions.sendERC721TransferFrom
+    props.walletActions.sendERC721TransferFrom,
+    props.wallet.fullTokenList
   )
 
   const getSelectedAccountBalance = useBalance(selectedAccount)
@@ -260,7 +257,7 @@ function Container (props: Props) {
     }
   }
 
-  const restorError = React.useMemo(() => {
+  const restoreError = React.useMemo(() => {
     if (invalidMnemonic) {
       setTimeout(function () { props.walletPageActions.hasMnemonicError(false) }, 5000)
       return true
@@ -273,7 +270,7 @@ function Container (props: Props) {
   }, [mnemonic])
 
   // This will scrape all of the user's accounts and combine the asset balances for a single asset
-  const fullAssetBalance = (asset: TokenInfo) => {
+  const fullAssetBalance = (asset: ERCToken) => {
     const amounts = accounts.map((account) => {
       let balance = 0
       const found = account.tokens.find((token) => token.asset.contractAddress === asset.contractAddress)
@@ -289,7 +286,7 @@ function Container (props: Props) {
   }
 
   // This will scrape all of the user's accounts and combine the fiat value for a single asset
-  const fullAssetFiatBalance = (asset: TokenInfo) => {
+  const fullAssetFiatBalance = (asset: ERCToken) => {
     const amounts = accounts.map((account) => {
       let fiatBalance = 0
       const found = account.tokens.find((token) => token.asset.contractAddress === asset.contractAddress)
@@ -313,7 +310,7 @@ function Container (props: Props) {
     }))
   }, [userVisibleTokenOptions, accounts])
 
-  const onSelectAsset = (asset: TokenInfo) => {
+  const onSelectAsset = (asset: ERCToken) => {
     props.walletPageActions.selectAsset({ asset: asset, timeFrame: selectedTimeline })
   }
 
@@ -339,7 +336,7 @@ function Container (props: Props) {
   const formatedPriceHistory = React.useMemo(() => {
     const formated = selectedAssetPriceHistory.map((obj) => {
       return {
-        date: convertMojoTimeToJS(obj.date),
+        date: mojoTimeDeltaToJSDate(obj.date),
         close: Number(obj.price)
       }
     })
@@ -425,26 +422,38 @@ function Container (props: Props) {
     props.walletPageActions.checkWalletsToImport()
   }
 
-  const onSetUserAssetVisible = (token: TokenInfo, isVisible: boolean) => {
+  const onSetUserAssetVisible = (token: ERCToken, isVisible: boolean) => {
     props.walletActions.setUserAssetVisible({ token, chainId: selectedNetwork.chainId, isVisible })
   }
 
-  const onAddUserAsset = (token: TokenInfo) => {
+  const onAddUserAsset = (token: ERCToken) => {
     props.walletActions.addUserAsset({
       token: {
         ...token,
-        logo: stripERC20TokenImageURL(token.logo)
+        logo: stripERC20TokenImageURL(token.logo) || ''
       },
       chainId: selectedNetwork.chainId
     })
   }
 
-  const onRemoveUserAsset = (token: TokenInfo) => {
+  const onRemoveUserAsset = (token: ERCToken) => {
     props.walletActions.removeUserAsset({ token, chainId: selectedNetwork.chainId })
   }
 
   const onOpenWalletSettings = () => {
     props.walletPageActions.openWalletSettings()
+  }
+
+  const onRetryTransaction = (transaction: TransactionInfo) => {
+    props.walletActions.retryTransaction(transaction)
+  }
+
+  const onSpeedupTransaction = (transaction: TransactionInfo) => {
+    props.walletActions.speedupTransaction(transaction)
+  }
+
+  const onCancelTransaction = (transaction: TransactionInfo) => {
+    props.walletActions.cancelTransaction(transaction)
   }
 
   React.useEffect(() => {
@@ -509,7 +518,7 @@ function Container (props: Props) {
                 <OnboardingRestore
                   onRestore={restoreWallet}
                   toggleShowRestore={onToggleShowRestore}
-                  hasRestoreError={restorError}
+                  hasRestoreError={restoreError}
                 />
               </OnboardingWrapper>
             }
@@ -602,6 +611,9 @@ function Container (props: Props) {
                 onOpenWalletSettings={onOpenWalletSettings}
                 onShowAddModal={onShowAddModal}
                 isMetaMaskInstalled={isMetaMaskInstalled}
+                onRetryTransaction={onRetryTransaction}
+                onSpeedupTransaction={onSpeedupTransaction}
+                onCancelTransaction={onCancelTransaction}
               />
             }
           </Route>

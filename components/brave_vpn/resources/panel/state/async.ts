@@ -25,7 +25,7 @@ handler.on(Actions.connectToNewRegion.getType(), async (store) => {
   const state = getState(store)
 
   if (!state.currentRegion) {
-    console.error(`Current region is not defined`)
+    console.error('Current region is not defined')
     return
   }
 
@@ -42,29 +42,38 @@ handler.on(Actions.connectionStateChanged.getType(), async (store) => {
 
   if (state.connectionStatus === ConnectionState.CONNECT_FAILED) {
     store.dispatch(Actions.connectionFailed())
-    console.warn(`Connection has failed`)
+    console.warn('Connection has failed')
   }
 })
 
 handler.on(Actions.purchaseConfirmed.getType(), async (store) => {
-  const [{ state }, { currentRegion }, { regions }, { urls }] = await Promise.all([
+  const [{ state }, { currentRegion }, { regions }] = await Promise.all([
     getPanelBrowserAPI().serviceHandler.getConnectionState(),
     getPanelBrowserAPI().serviceHandler.getSelectedRegion(),
-    getPanelBrowserAPI().serviceHandler.getAllRegions(),
-    getPanelBrowserAPI().serviceHandler.getProductUrls()
+    getPanelBrowserAPI().serviceHandler.getAllRegions()
   ])
 
-  store.dispatch(Actions.initUIMain({
+  store.dispatch(Actions.showMainView({
     currentRegion,
     regions,
-    productUrls: urls,
     connectionStatus: ((state === ConnectionState.CONNECT_FAILED)
     ? ConnectionState.DISCONNECTED : state) /* Treat connection failure on startup as disconnected */
   }))
 })
 
 handler.on(Actions.initialize.getType(), async (store) => {
-  const { state } = await getPanelBrowserAPI().serviceHandler.getPurchasedState()
+  const [{ state }, { urls }] = await Promise.all([
+    getPanelBrowserAPI().serviceHandler.getPurchasedState(),
+    getPanelBrowserAPI().serviceHandler.getProductUrls()
+  ])
+
+  store.dispatch(Actions.initialized({
+    productUrls: urls
+  }))
+
+  if (state === PurchasedState.NOT_PURCHASED) {
+    store.dispatch(Actions.showSellView())
+  }
 
   if (state === PurchasedState.PURCHASED) {
     store.dispatch(Actions.purchaseConfirmed())

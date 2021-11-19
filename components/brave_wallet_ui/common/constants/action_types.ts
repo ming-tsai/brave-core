@@ -4,25 +4,13 @@
 // you can obtain one at http://mozilla.org/MPL/2.0/.
 
 import {
-  AppObjectType,
-  AccountInfo,
   DefaultWallet,
   TransactionInfo,
-  TokenInfo,
+  ERCToken,
   AccountAssetOptionType,
   SlippagePresetObjectType,
   WalletAccountType
 } from '../../constants/types'
-
-export type InitializedPayloadType = {
-  isWalletCreated: boolean
-  isWalletLocked: boolean
-  favoriteApps: AppObjectType[]
-  isWalletBackedUp: boolean
-  visibleTokens: string[]
-  accountInfos: AccountInfo[]
-  selectedAccount: string
-}
 
 export type UnlockWalletPayloadType = {
   password: string
@@ -33,7 +21,7 @@ export type ChainChangedEventPayloadType = {
 }
 
 export type IsEip1559Changed = {
-  chainId: string,
+  chainId: string
   isEip1559: boolean
 }
 
@@ -50,29 +38,29 @@ export type TransactionStatusChanged = {
 }
 
 export type AddUserAssetPayloadType = {
-  token: TokenInfo
+  token: ERCToken
   chainId: string
 }
 
 export type RemoveUserAssetPayloadType = {
-  token: TokenInfo
+  token: ERCToken
   chainId: string
 }
 
 export type SetUserAssetVisiblePayloadType = {
-  token: TokenInfo
+  token: ERCToken
   chainId: string
   isVisible: boolean
 }
 
 export type SwapParamsPayloadType = {
-  fromAsset: AccountAssetOptionType,
-  toAsset: AccountAssetOptionType,
-  fromAssetAmount?: string,
-  toAssetAmount?: string,
-  slippageTolerance: SlippagePresetObjectType,
-  accountAddress: string,
-  networkChainId: string,
+  fromAsset: AccountAssetOptionType
+  toAsset: AccountAssetOptionType
+  fromAssetAmount?: string
+  toAssetAmount?: string
+  slippageTolerance: SlippagePresetObjectType
+  accountAddress: string
+  networkChainId: string
   full: boolean
 }
 
@@ -81,16 +69,16 @@ export type ActiveOriginChanged = {
 }
 
 export type UpdateUnapprovedTransactionGasFieldsType = {
-  txMetaId: string,
-  gasLimit: string,
-  gasPrice?: string,
-  maxPriorityFeePerGas?: string,
+  txMetaId: string
+  gasLimit: string
+  gasPrice?: string
+  maxPriorityFeePerGas?: string
   maxFeePerGas?: string
 }
 
 export type UpdateUnapprovedTransactionSpendAllowanceType = {
-  txMetaId: string,
-  spenderAddress: string,
+  txMetaId: string
+  spenderAddress: string
   allowance: string
 }
 
@@ -107,10 +95,10 @@ export type DefaultBaseCryptocurrencyChanged = {
 }
 
 export type SitePermissionsPayloadType = {
-  accounts: (WalletAccountType | undefined)[]
+  accounts: Array<WalletAccountType | undefined>
 }
 
 export type RemoveSitePermissionPayloadType = {
-  origin: string,
+  origin: string
   account: string
 }

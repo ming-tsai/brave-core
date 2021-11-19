@@ -39,7 +39,7 @@ import store from './store'
 import * as WalletPanelActions from './actions/wallet_panel_actions'
 import * as WalletActions from '../common/actions/wallet_actions'
 import {
-  AppObjectType,
+  AppItem,
   AppsListType,
   WalletState,
   PanelState,
@@ -62,8 +62,8 @@ import {
   findUnstoppableDomainAddress,
   getERC20Allowance
 } from '../common/async/lib'
-
-import { useAssets, useBalance, useSwap, useSend, useTimeout, usePreset } from '../common/hooks'
+import { isHardwareAccount } from '../utils/address-utils'
+import { useAssets, useBalance, useSwap, useSend, usePreset } from '../common/hooks'
 
 type Props = {
   panel: PanelState
@@ -112,7 +112,8 @@ function Container (props: Props) {
     networkPayload,
     swapQuote,
     swapError,
-    signMessageData
+    signMessageData,
+    switchChainRequest
   } = props.panel
 
   // TODO(petemill): If initial data or UI takes a noticeable amount of time to arrive
@@ -124,11 +125,6 @@ function Container (props: Props) {
   const [selectedWyreAsset, setSelectedWyreAsset] = React.useState<AccountAssetOptionType>(WyreAccountAssetOptions[0])
   const [showSelectAsset, setShowSelectAsset] = React.useState<boolean>(false)
   const [buyAmount, setBuyAmount] = React.useState('')
-
-  const notifyUserInteraction = () => {
-    props.walletActions.notifyUserInteraction()
-  }
-  useTimeout(notifyUserInteraction, isWalletLocked)
 
   const {
     assetOptions,
@@ -191,7 +187,8 @@ function Container (props: Props) {
     selectedAccount,
     props.walletActions.sendERC20Transfer,
     props.walletActions.sendTransaction,
-    props.walletActions.sendERC721TransferFrom
+    props.walletActions.sendERC721TransferFrom,
+    props.wallet.fullTokenList
   )
 
   React.useMemo(() => {
@@ -318,7 +315,7 @@ function Container (props: Props) {
   const onSetup = () => {
     props.walletPanelActions.setupWallet()
   }
-  const addToFavorites = (app: AppObjectType) => {
+  const addToFavorites = (app: AppItem) => {
     props.walletActions.addFavoriteApp(app)
   }
 
@@ -334,7 +331,7 @@ function Container (props: Props) {
     props.walletPanelActions.openWalletApps()
   }
 
-  const removeFromFavorites = (app: AppObjectType) => {
+  const removeFromFavorites = (app: AppItem) => {
     props.walletActions.removeFavoriteApp(app)
   }
 
@@ -356,17 +353,8 @@ function Container (props: Props) {
     props.walletPanelActions.navigateTo('main')
   }
 
-  const isHardwareAccount = (address: string) => {
-    for (const account of accounts) {
-      if (account.deviceId && account.address === address) {
-        return true
-      }
-    }
-    return false
-  }
-
   const onCancelSigning = () => {
-    if (isHardwareAccount(signMessageData[0].address)) {
+    if (isHardwareAccount(accounts, signMessageData[0].address)) {
       props.walletPanelActions.signMessageHardwareProcessed({
         success: false,
         id: signMessageData[0].id,
@@ -382,7 +370,7 @@ function Container (props: Props) {
   }
 
   const onSignData = () => {
-    if (isHardwareAccount(signMessageData[0].address)) {
+    if (isHardwareAccount(accounts, signMessageData[0].address)) {
       props.walletPanelActions.signMessageHardware(signMessageData[0])
     } else {
       props.walletPanelActions.signMessageProcessed({
@@ -396,12 +384,16 @@ function Container (props: Props) {
     props.walletPanelActions.addEthereumChainRequestCompleted({ chainId: networkPayload.chainId, approved: true })
   }
 
-  const onApproveChangeNetwork = () => {
-    // Logic here to approve changing networks
-  }
-
   const onCancelAddNetwork = () => {
     props.walletPanelActions.addEthereumChainRequestCompleted({ chainId: networkPayload.chainId, approved: false })
+  }
+
+  const onApproveChangeNetwork = () => {
+    props.walletPanelActions.switchEthereumChainProcessed({ approved: true, origin: switchChainRequest.origin })
+  }
+
+  const onCancelChangeNetwork = () => {
+    props.walletPanelActions.switchEthereumChainProcessed({ approved: false, origin: switchChainRequest.origin })
   }
 
   const onNetworkLearnMore = () => {
@@ -423,9 +415,13 @@ function Container (props: Props) {
   const onQueueNextTransction = () => {
     props.walletActions.queueNextTransaction()
   }
-
   const onConfirmTransaction = () => {
-    if (selectedPendingTransaction) {
+    if (!selectedPendingTransaction) {
+      return
+    }
+    if (isHardwareAccount(accounts, selectedPendingTransaction.fromAddress)) {
+      props.walletPanelActions.approveHardwareTransaction(selectedPendingTransaction)
+    } else {
       props.walletActions.approveTransaction(selectedPendingTransaction)
     }
   }
@@ -435,7 +431,9 @@ function Container (props: Props) {
   }
 
   const onCancelConnectHardwareWallet = () => {
-    // Logic here to cancel connecting your hardware wallet
+    // Navigating to main panel view will unmount ConnectHardwareWalletPanel
+    // and therefore forfeit connecting to the hardware wallet.
+    props.walletPanelActions.navigateToMain()
   }
 
   const removeSitePermission = (origin: string, address: string) => {
@@ -484,11 +482,27 @@ function Container (props: Props) {
     )
   }
 
+  if (selectedPendingTransaction && selectedPanel === 'connectHardwareWallet') {
+    return (
+      <PanelWrapper isLonger={false}>
+        <StyledExtensionWrapper>
+          <ConnectHardwareWalletPanel
+            onCancel={onCancelConnectHardwareWallet}
+            walletName={selectedAccount.name}
+            hardwareWalletError={props.panel.hardwareWalletError}
+            retryCallable={onConfirmTransaction}
+          />
+        </StyledExtensionWrapper>
+      </PanelWrapper>
+    )
+  }
+
   if (selectedPendingTransaction) {
     return (
       <PanelWrapper isLonger={true}>
         <LongWrapper>
           <ConfirmTransactionPanel
+            siteURL={activeOrigin}
             onConfirm={onConfirmTransaction}
             onReject={onRejectTransaction}
             onRejectAllTransactions={onRejectAllTransactions}
@@ -505,24 +519,9 @@ function Container (props: Props) {
             updateUnapprovedTransactionGasFields={props.walletActions.updateUnapprovedTransactionGasFields}
             updateUnapprovedTransactionSpendAllowance={props.walletActions.updateUnapprovedTransactionSpendAllowance}
             gasEstimates={gasEstimates}
+            fullTokenList={props.wallet.fullTokenList}
           />
         </LongWrapper>
-      </PanelWrapper>
-    )
-  }
-
-  if (selectedPanel === 'connectHardwareWallet') {
-    return (
-      <PanelWrapper isLonger={false}>
-        <StyledExtensionWrapper>
-          <ConnectHardwareWalletPanel
-            onCancel={onCancelConnectHardwareWallet}
-            isConnected={false}
-            walletName='Ledger 1'
-            // Pass a boolean true here to show needs Transaction Confirmation state
-            requestingConfirmation={false}
-          />
-        </StyledExtensionWrapper>
       </PanelWrapper>
     )
   }
@@ -537,8 +536,28 @@ function Container (props: Props) {
             onApproveChangeNetwork={onApproveChangeNetwork}
             onCancel={onCancelAddNetwork}
             onLearnMore={onNetworkLearnMore}
+            selectedNetwork={GetNetworkInfo(selectedNetwork.chainId, networkList)}
             networkPayload={networkPayload}
             panelType='add'
+          />
+        </LongWrapper>
+      </PanelWrapper>
+    )
+  }
+
+  if (selectedPanel === 'switchEthereumChain') {
+    return (
+      <PanelWrapper isLonger={true}>
+        <LongWrapper>
+          <AllowAddChangeNetworkPanel
+            siteOrigin={switchChainRequest.origin.url}
+            onApproveAddNetwork={onApproveAddNetwork}
+            onApproveChangeNetwork={onApproveChangeNetwork}
+            onCancel={onCancelChangeNetwork}
+            onLearnMore={onNetworkLearnMore}
+            selectedNetwork={GetNetworkInfo(selectedNetwork.chainId, networkList)}
+            networkPayload={GetNetworkInfo(switchChainRequest.chainId, networkList)}
+            panelType='change'
           />
         </LongWrapper>
       </PanelWrapper>
@@ -569,7 +588,7 @@ function Container (props: Props) {
       assets = WyreAccountAssetOptions
     } else if (selectedPanel === 'send') {
       assets = sendAssetOptions
-    } else {  // swap
+    } else { // swap
       assets = filteredAssetList
     }
     return (

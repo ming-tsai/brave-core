@@ -20,6 +20,9 @@ extern const char kAssetRatioBaseURL[];
 
 constexpr uint256_t kDefaultSendEthGasLimit = 21000;
 constexpr uint256_t kDefaultSendEthGasPrice = 150000000000ULL;  // 150 Gwei
+constexpr uint256_t kDefaultERC20TransferGasLimit = 300000;
+constexpr uint256_t kDefaultERC721TransferGasLimit = 800000;
+constexpr uint256_t kDefaultERC20ApproveGasLimit = 300000;
 
 constexpr int32_t kAutoLockMinutesMin = 1;
 constexpr int32_t kAutoLockMinutesMax = 10080;
@@ -112,6 +115,7 @@ constexpr webui::LocalizedString kLocalizedStrings[] = {
     {"braveWalletPrice", IDS_BRAVE_WALLET_PRICE},
     {"braveWalletBack", IDS_BRAVE_WALLET_BACK},
     {"braveWalletAddAccount", IDS_BRAVE_WALLET_ADD_ACCOUNT},
+    {"braveWalletPoweredByCoinGecko", IDS_BRAVE_WALLET_POWERED_BY_COIN_GECKO},
     {"braveWalletBuy", IDS_BRAVE_WALLET_BUY},
     {"braveWalletSend", IDS_BRAVE_WALLET_SEND},
     {"braveWalletSwap", IDS_BRAVE_WALLET_SWAP},
@@ -122,6 +126,9 @@ constexpr webui::LocalizedString kLocalizedStrings[] = {
      IDS_BRAVE_WALLET_SLIPPAGE_TOLERANCE_TITLE},
     {"braveWalletExpiresInTitle", IDS_BRAVE_WALLET_EXPIRES_IN_TITLE},
     {"braveWalletSendPlaceholder", IDS_BRAVE_WALLET_SEND_PLACEHOLDER},
+    {"braveWalletSwapDisclaimer", IDS_BRAVE_WALLET_SWAP_DISCLAIMER},
+    {"braveWalletSwapDisclaimerDescription",
+     IDS_BRAVE_WALLET_SWAP_DISCLAIMER_DESCRIPTION},
     {"braveWalletButtonContinue", IDS_BRAVE_WALLET_BUTTON_CONTINUE},
     {"braveWalletButtonCopy", IDS_BRAVE_WALLET_BUTTON_COPY},
     {"braveWalletButtonVerify", IDS_BRAVE_WALLET_BUTTON_VERIFY},
@@ -421,8 +428,25 @@ constexpr webui::LocalizedString kLocalizedStrings[] = {
     {"braveWalletTransactionExplorerMissing",
      IDS_BRAVE_WALLET_TRANSACTION_EXPLORER_MISSING},
     {"braveWalletTransactionExplorer", IDS_BRAVE_WALLET_TRANSACTION_EXPLORER},
+    {"braveWalletTransactionSpeedup", IDS_BRAVE_WALLET_TRANSACTION_SPEEDUP},
+    {"braveWalletTransactionCancel", IDS_BRAVE_WALLET_TRANSACTION_CANCEL},
+    {"braveWalletTransactionRetry", IDS_BRAVE_WALLET_TRANSACTION_RETRY},
+    {"braveWalletTransactionStatusUnapproved",
+     IDS_BRAVE_WALLET_TRANSACTION_STATUS_UNAPPROVED},
+    {"braveWalletTransactionStatusApproved",
+     IDS_BRAVE_WALLET_TRANSACTION_STATUS_APPROVED},
+    {"braveWalletTransactionStatusRejected",
+     IDS_BRAVE_WALLET_TRANSACTION_STATUS_REJECTED},
+    {"braveWalletTransactionStatusSubmitted",
+     IDS_BRAVE_WALLET_TRANSACTION_STATUS_SUBMITTED},
+    {"braveWalletTransactionStatusConfirmed",
+     IDS_BRAVE_WALLET_TRANSACTION_STATUS_CONFIRMED},
+    {"braveWalletTransactionStatusError",
+     IDS_BRAVE_WALLET_TRANSACTION_STATUS_ERROR},
     {"braveWalletTransactionPlaceholder",
      IDS_BRAVE_WALLET_TRANSACTION_PLACEHOLDER},
+    {"braveWalletTransactionApproveUnlimited",
+     IDS_BRAVE_WALLET_TRANSACTION_APPROVE_UNLIMITED},
     {"braveWalletEditGasTitle1", IDS_BRAVE_WALLET_EDIT_GAS_TITLE1},
     {"braveWalletEditGasTitle2", IDS_BRAVE_WALLET_EDIT_GAS_TITLE2},
     {"braveWalletEditGasDescription", IDS_BRAVE_WALLET_EDIT_GAS_DESCRIPTION},
@@ -453,6 +477,9 @@ constexpr webui::LocalizedString kLocalizedStrings[] = {
     {"braveWalletNotValidEthAddress", IDS_BRAVE_WALLET_NOT_VALID_ETH_ADDRESS},
     {"braveWalletNotValidAddress", IDS_BRAVE_WALLET_NOT_VALID_ADDRESS},
     {"braveWalletNotDomain", IDS_BRAVE_WALLET_NOT_DOMAIN},
+    {"braveWalletSameAddressError", IDS_BRAVE_WALLET_SAME_ADDRESS_ERROR},
+    {"braveWalletContractAddressError",
+     IDS_BRAVE_WALLET_CONTRACT_ADDRESS_ERROR},
     {"braveWalletQueueOf", IDS_BRAVE_WALLET_QUEUE_OF},
     {"braveWalletQueueNext", IDS_BRAVE_WALLET_QUEUE_NEXT},
     {"braveWalletQueueFirst", IDS_BRAVE_WALLET_QUEUE_FIRST},
@@ -476,8 +503,24 @@ constexpr webui::LocalizedString kLocalizedStrings[] = {
      IDS_BRAVE_WALLET_HARDWARE_ACCOUNT_NOT_FOUND_ERROR},
     {"braveWalletCreateBridgeError",
      IDS_BRAVE_WALLET_HARDWARE_CREATE_BRIDGE_ERROR},
-    {"braveWalletImportingAccountsError",
-     IDS_BRAVE_WALLET_HARDWARE_ACCOUNTS_IMPORT_ERROR}};
+    {"braveWalletProcessTransactionError",
+     IDS_BRAVE_WALLET_HARDWARE_PROCESS_TRANSACTION_ERROR},
+    {"braveWalletApproveTransactionError",
+     IDS_BRAVE_WALLET_HARDWARE_APPROVE_TRANSACTION_ERROR},
+    {"braveWalletTransactionNotFoundSignError",
+     IDS_BRAVE_WALLET_HARDWARE_TRANSACTION_NOT_FOUND_ERROR},
+    {"braveWalletSignOnDeviceError",
+     IDS_BRAVE_WALLET_HARDWARE_TRANSACTION_DEVICE_ERROR},
+    {"braveWalletNoMessageToSignError",
+     IDS_BRAVE_WALLET_HARDWARE_TRANSACTION_NO_MESSAGE_TO_SIGN_ERROR},
+    {"braveWalletProcessMessageError",
+     IDS_BRAVE_WALLET_HARDWARE_SIGN_MESSAGE_ERROR},
+    {"braveWalletUnknownKeyringError",
+     IDS_BRAVE_WALLET_HARDWARE_UNKNOWN_KEYRING_ERROR},
+    {"braveWalletBridgeCommandInProgress",
+     IDS_BRAVE_WALLET_HARDWARE_COMMAND_IN_PROGRESS_ERROR},
+    {"braveWalletBridgeNotReady",
+     IDS_BRAVE_WALLET_HARDWARE_BRIDGE_NOT_READY_ERROR}};
 
 const char kRopstenSwapBaseAPIURL[] = "https://ropsten.api.0x.org/";
 const char kRopstenBuyTokenPercentageFee[] = "0.00875";

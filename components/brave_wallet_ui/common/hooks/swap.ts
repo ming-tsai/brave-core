@@ -18,7 +18,8 @@ import {
   SwapResponse,
   ToOrFromType,
   WalletAccountType,
-  kRopstenChainId, ApproveERC20Params
+  ROPSTEN_CHAIN_ID,
+  ApproveERC20Params
 } from '../../constants/types'
 import { SlippagePresetOptions } from '../../options/slippage-preset-options'
 import { ExpirationPresetOptions } from '../../options/expiration-preset-options'
@@ -41,7 +42,7 @@ export default function useSwap (
   rawError?: SwapErrorResponse
 ) {
   const swapAssetOptions = React.useMemo(() => {
-    if (selectedNetwork.chainId === kRopstenChainId) {
+    if (selectedNetwork.chainId === ROPSTEN_CHAIN_ID) {
       return RopstenSwapAssetOptions
     }
 
@@ -143,7 +144,7 @@ export default function useSwap (
         return 'unknownError'
     }
 
-    return
+    return undefined
   }, [fromAsset, fromAmount, fromAssetBalance, ethBalance, feesBN, rawError, allowance])
 
   /**
@@ -210,7 +211,7 @@ export default function useSwap (
       slippageTolerance?: SlippagePresetObjectType
     },
     state: {
-      fromAmount: string,
+      fromAmount: string
       toAmount: string
     },
     full: boolean = false
@@ -314,10 +315,16 @@ export default function useSwap (
   // Set isLoading to false as soon as quote has been fetched.
   React.useEffect(() => setIsLoading(false), [quote])
 
-  const onSwapQuoteRefresh = () => onSwapParamsChange(
-    { toOrFrom: 'from' },
-    { fromAmount, toAmount }
-  )
+  const onSwapQuoteRefresh = () => {
+    const customSlippage = {
+      id: 4,
+      slippage: Number(customSlippageTolerance)
+    }
+    onSwapParamsChange(
+      { toOrFrom: 'from', slippageTolerance: customSlippageTolerance ? customSlippage : slippageTolerance },
+      { fromAmount, toAmount }
+    )
+  }
 
   /**
    * onSwapParamsChangeDebounced is a debounced function which delays calling
@@ -330,7 +337,7 @@ export default function useSwap (
    * amount values.
    */
   const onSwapParamsChangeDebounced = React.useCallback(
-    // @ts-ignore
+    // @ts-expect-error
     debounce(onSwapParamsChange, 1000),
     [onSwapParamsChange]
   )

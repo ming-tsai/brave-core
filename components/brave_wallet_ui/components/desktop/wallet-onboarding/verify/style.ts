@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import { WalletButton } from '../../../shared/style'
 
 interface StyleProps {
   isSelected: boolean
@@ -64,8 +65,8 @@ export const RecoveryPhraseContainer = styled.div`
   margin-bottom: 40px;
 `
 
-export const RecoveryBubble = styled.button<Partial<StyleProps>>`
-  cursor: ${(p) => p.isSelected ? `default` : 'pointer'};
+export const RecoveryBubble = styled(WalletButton) <Partial<StyleProps>>`
+  cursor: ${(p) => p.isSelected ? 'default' : 'pointer'};
   outline: none;
   background: none;
   border: ${(p) => p.isSelected ? `1px solid ${p.theme.color.divider01}` : 'none'};
@@ -90,7 +91,7 @@ export const RecoveryBubbleText = styled.span<Partial<StyleProps>>`
   color: ${(p) => p.isSelected ? p.theme.color.background02 : p.theme.color.text01};
 `
 
-export const SelectedBubble = styled.button`
+export const SelectedBubble = styled(WalletButton)`
   cursor: pointer;
   outline: none;
   background: none;

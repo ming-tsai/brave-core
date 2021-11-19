@@ -3,28 +3,35 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // you can obtain one at http://mozilla.org/MPL/2.0/.
 
-import TrezorConnect, { Unsuccessful } from 'trezor-connect'
-
+import TrezorConnect, { Unsuccessful, Success } from 'trezor-connect'
+import { EthereumSignedTx } from 'trezor-connect/lib/typescript/networks/ethereum'
 import {
   TrezorCommand,
   UnlockCommand,
-  UnlockResponse,
+  UnlockResponsePayload,
   GetAccountsCommand,
   GetAccountsResponsePayload,
-  TrezorGetPublicKeyResponse
+  TrezorGetAccountsResponse,
+  SignTransactionCommand,
+  SignTransactionResponsePayload,
+  SignMessageCommand,
+  SignMessageResponsePayload,
+  SignMessageResponse,
+  UnlockResponse
 } from '../common/trezor/trezor-messages'
 
 import { addTrezorCommandHandler } from '../common/trezor/trezor-command-handler'
 
-const createUnlockResponse = (command: UnlockCommand, result: Boolean, error?: Unsuccessful): UnlockResponse => {
-  return { id: command.id, command: command.command, result: result, origin: command.origin, error: error }
+const createUnlockResponse = (command: UnlockCommand, result: boolean, error?: Unsuccessful): UnlockResponsePayload => {
+  const payload: UnlockResponse = (!result && error) ? error : { success: result }
+  return { id: command.id, command: command.command, payload: payload, origin: command.origin }
 }
 
-const createGetAccountsResponse = (command: GetAccountsCommand, result: TrezorGetPublicKeyResponse): GetAccountsResponsePayload => {
+const createGetAccountsResponse = (command: GetAccountsCommand, result: TrezorGetAccountsResponse): GetAccountsResponsePayload => {
   return { id: command.id, command: command.command, payload: result, origin: command.origin }
 }
 
-addTrezorCommandHandler(TrezorCommand.Unlock, (command: UnlockCommand): Promise<UnlockResponse> => {
+addTrezorCommandHandler(TrezorCommand.Unlock, (command: UnlockCommand): Promise<UnlockResponsePayload> => {
   return new Promise(async (resolve) => {
     TrezorConnect.init({
       connectSrc: 'https://connect.trezor.io/8/',
@@ -43,8 +50,24 @@ addTrezorCommandHandler(TrezorCommand.Unlock, (command: UnlockCommand): Promise<
 
 addTrezorCommandHandler(TrezorCommand.GetAccounts, (command: GetAccountsCommand, source: Window): Promise<GetAccountsResponsePayload> => {
   return new Promise(async (resolve) => {
-    TrezorConnect.getPublicKey({ bundle: command.paths }).then((result: TrezorGetPublicKeyResponse) => {
+    TrezorConnect.getPublicKey({ bundle: command.paths }).then((result: TrezorGetAccountsResponse) => {
       resolve(createGetAccountsResponse(command, result))
+    })
+  })
+})
+
+addTrezorCommandHandler(TrezorCommand.SignTransaction, (command: SignTransactionCommand, source: Window): Promise<SignTransactionResponsePayload> => {
+  return new Promise(async (resolve) => {
+    TrezorConnect.ethereumSignTransaction(command.payload).then((result: Unsuccessful | Success<EthereumSignedTx>) => {
+      resolve({ id: command.id, command: command.command, payload: result, origin: command.origin })
+    })
+  })
+})
+
+addTrezorCommandHandler(TrezorCommand.SignMessage, (command: SignMessageCommand, source: Window): Promise<SignMessageResponsePayload> => {
+  return new Promise(async (resolve) => {
+    TrezorConnect.ethereumSignMessage(command.payload).then((result: SignMessageResponse) => {
+      resolve({ id: command.id, command: command.command, payload: result, origin: command.origin })
     })
   })
 })

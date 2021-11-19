@@ -6,10 +6,9 @@
 import * as React from 'react'
 
 import {
-  AssetPriceInfo,
+  AssetPrice,
   EthereumChain,
-  MojoTime,
-  TokenInfo,
+  ERCToken,
   TransactionInfo,
   TransactionStatus,
   TransactionType,
@@ -25,6 +24,8 @@ import {
 } from '../../utils/format-balances'
 import usePricing from './pricing'
 import useAddressLabels, { SwapExchangeProxy } from './address-labels'
+import { getLocale } from '../../../common/locale'
+import { TimeDelta } from 'gen/mojo/public/mojom/base/time.mojom.m.js'
 
 interface ParsedTransactionFees {
   gasLimit: string
@@ -39,7 +40,7 @@ interface ParsedTransactionFees {
 interface ParsedTransaction extends ParsedTransactionFees {
   // Common fields
   hash: string
-  createdTime: MojoTime
+  createdTime: TimeDelta
   status: TransactionStatus
   sender: string
   senderLabel: string
@@ -52,7 +53,8 @@ interface ParsedTransaction extends ParsedTransactionFees {
   symbol: string
   decimals: number
   insufficientFundsError: boolean
-  erc721TokenInfo?: TokenInfo
+  addressError: string
+  erc721ERCToken?: ERCToken
   erc721TokenId?: string
   isSwap?: boolean
 
@@ -86,8 +88,9 @@ export function useTransactionFeesParser (selectedNetwork: EthereumChain, networ
 export function useTransactionParser (
   selectedNetwork: EthereumChain,
   accounts: WalletAccountType[],
-  spotPrices: AssetPriceInfo[],
-  visibleTokens: TokenInfo[]
+  spotPrices: AssetPrice[],
+  visibleTokens: ERCToken[],
+  fullTokenList?: ERCToken[]
 ) {
   const findSpotPrice = usePricing(spotPrices)
   const getAddressLabel = useAddressLabels(accounts)
@@ -97,12 +100,25 @@ export function useTransactionParser (
     return visibleTokens.find((token) => token.contractAddress.toLowerCase() === contractAddress.toLowerCase())
   }, [visibleTokens])
 
+  const checkForAddressError = (to: string, from: string): string => {
+    // If value is the same as the selectedAccounts Wallet Address
+    if (to.toLowerCase() === from.toLowerCase()) {
+      return getLocale('braveWalletSameAddressError')
+    }
+    // If value is a Tokens Contract Address
+    if (fullTokenList?.some(token => token.contractAddress.toLowerCase() === to.toLowerCase())) {
+      return getLocale('braveWalletContractAddressError')
+    }
+    return ''
+  }
+
   return React.useCallback((transactionInfo: TransactionInfo) => {
     const { txArgs, txData, fromAddress } = transactionInfo
     const { baseData } = txData
     const { value, to } = baseData
     const account = accounts.find((account) => account.address.toLowerCase() === fromAddress.toLowerCase())
     const accountsNativeFiatBalance = accounts.find((account) => account.address.toLowerCase() === fromAddress.toLowerCase())?.fiatBalance
+    const usersTokenInfo = account?.tokens.find((asset) => asset.asset.contractAddress.toLowerCase() === to.toLowerCase())
 
     switch (true) {
       // transfer(address recipient, uint256 amount) → bool
@@ -115,7 +131,7 @@ export function useTransactionParser (
         const feeDetails = parseTransactionFees(transactionInfo)
         const { gasFeeFiat } = feeDetails
         const totalAmountFiat = (Number(gasFeeFiat) + Number(sendAmountFiat)).toFixed(2)
-        const accountsTokenFiatBalance = account?.tokens.find((token) => token.asset.contractAddress.toLowerCase() === to.toLowerCase())?.fiatBalance
+        const accountsTokenFiatBalance = usersTokenInfo?.fiatBalance
         const insufficientNativeFunds = Number(gasFeeFiat) > Number(accountsNativeFiatBalance)
         const insufficientTokenFunds = Number(sendAmountFiat) > Number(accountsTokenFiatBalance)
 
@@ -134,6 +150,7 @@ export function useTransactionParser (
           symbol: token?.symbol ?? '',
           decimals: token?.decimals ?? 18,
           insufficientFundsError: insufficientNativeFunds || insufficientTokenFunds,
+          addressError: checkForAddressError(address, transactionInfo.fromAddress),
           ...feeDetails
         } as ParsedTransaction
       }
@@ -163,8 +180,9 @@ export function useTransactionParser (
           symbol: token?.symbol ?? '',
           decimals: 0,
           insufficientFundsError: insufficientNativeFunds,
-          erc721TokenInfo: token,
+          erc721ERCToken: token,
           erc721TokenId: hexToNumber(tokenID ?? ''),
+          addressError: checkForAddressError(toAddress, fromAddress),
           ...feeDetails
         } as ParsedTransaction
       }
@@ -177,6 +195,9 @@ export function useTransactionParser (
         const { gasFeeFiat } = feeDetails
         const totalAmountFiat = Number(gasFeeFiat).toFixed(2)
         const insufficientNativeFunds = Number(gasFeeFiat) > Number(accountsNativeFiatBalance)
+        const formatedValue = formatBalance(amount, token?.decimals ?? 18)
+        const userTokenBalance = usersTokenInfo?.assetBalance ?? ''
+        const allowanceValue = Number(amount) > Number(userTokenBalance) ? getLocale('braveWalletTransactionApproveUnlimited') : formatedValue
 
         return {
           hash: transactionInfo.txHash,
@@ -189,7 +210,7 @@ export function useTransactionParser (
           fiatValue: (0).toFixed(2),
           fiatTotal: totalAmountFiat,
           nativeCurrencyTotal: (0).toFixed(2),
-          value: formatBalance(amount, token?.decimals ?? 18),
+          value: allowanceValue,
           symbol: token?.symbol ?? '',
           decimals: token?.decimals ?? 18,
           approvalTarget: address,
@@ -225,6 +246,7 @@ export function useTransactionParser (
           symbol: selectedNetwork.symbol,
           decimals: selectedNetwork?.decimals ?? 18,
           insufficientFundsError: Number(totalAmountFiat) > Number(accountsNativeFiatBalance),
+          addressError: checkForAddressError(to, transactionInfo.fromAddress),
           isSwap: transactionInfo.txData.baseData.to.toLowerCase() === SwapExchangeProxy,
           ...feeDetails
         } as ParsedTransaction

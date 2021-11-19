@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-
+import { WalletButton } from '../../shared/style'
 interface StyleProps {
   orb: string
 }
@@ -29,30 +29,30 @@ export const LeftSide = styled.div`
 `
 
 export const AccountCircle = styled.div<StyleProps>`
-	width: 40px;
-	height: 40px;
-	border-radius: 100%;
+  width: 40px;
+  height: 40px;
+  border-radius: 100%;
   background-image: url(${(p) => p.orb});
   background-size: cover;
 `
 
 export const AccountNameText = styled.span`
-	font-family: Poppins;
-	font-size: 13px;
-	line-height: 20px;
-	font-weight: 600;
+  font-family: Poppins;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
   color: ${(p) => p.theme.color.text01};
 `
 
 export const AccountAddressText = styled.span`
-	font-family: Poppins;
-	font-size: 12px;
-	line-height: 18px;
-	font-weight: 400;
+  font-family: Poppins;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 400;
   color: ${(p) => p.theme.color.text02};
 `
 
-export const DisconnectButton = styled.button<Partial<StyleProps>>`
+export const DisconnectButton = styled(WalletButton) <Partial<StyleProps>>`
   display: flex;;
   cursor: pointer;
   outline: none;

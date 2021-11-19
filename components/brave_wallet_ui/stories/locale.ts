@@ -65,6 +65,7 @@ provideStrings({
   braveWalletPrice: 'Price',
   braveWalletBack: 'Back',
   braveWalletAddAccount: 'Add Account',
+  braveWalletPoweredByCoinGecko: 'Price data powered by CoinGecko',
 
   // BuySendSwap
   braveWalletBuy: 'Buy',
@@ -75,6 +76,8 @@ provideStrings({
   braveWalletSlippageToleranceTitle: 'Slippage tolerance',
   braveWalletExpiresInTitle: 'Expires in',
   braveWalletSendPlaceholder: '0x address or url',
+  braveWalletSwapDisclaimer: 'Brave uses $10x$2 as a DEX aggregator.',
+  braveWalletSwapDisclaimerDescription: '0x will process the Ethereum address and IP address to fulfill a transaction (including getting quotes). 0x will ONLY use this data for the purposes of processing transactions.',
 
   // Buttons
   braveWalletButtonContinue: 'Continue',
@@ -348,7 +351,11 @@ provideStrings({
   braveWalletTransactionReceived: 'received',
   braveWalletTransactionExplorerMissing: 'Block explorer URL is not available.',
   braveWalletTransactionExplorer: 'View on block explorer',
+  braveWalletTransactionSpeedup: 'Speedup transaction',
+  braveWalletTransactionCancel: 'Cancel transaction',
+  braveWalletTransactionRetry: 'Retry transaction',
   braveWalletTransactionPlaceholder: 'Transactions will appear here',
+  braveWalletTransactionApproveUnlimited: 'Unlimited',
 
   // Edit Gas
   braveWalletEditGasTitle1: 'Max priority fee',
@@ -379,6 +386,8 @@ provideStrings({
   braveWalletNotValidEthAddress: 'Not a valid ETH address',
   braveWalletNotValidAddress: 'Not a valid address',
   braveWalletNotDomain: 'Domain is not registered',
+  braveWalletSameAddressError: 'The receiving address is your own address',
+  braveWalletContractAddressError: 'The receiving address is a tokens contract address',
 
   // Transaction Queue Strings
   braveWalletQueueOf: 'of',

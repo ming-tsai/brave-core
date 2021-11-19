@@ -3,12 +3,14 @@ import CloseIcon from '../../assets/close.svg'
 import KeyIcon from '../../../../assets/svg-icons/key-icon.svg'
 import CheckIcon from '../../assets/filled-checkmark.svg'
 import { PanelButtonTypes } from './index'
+import { WalletButton } from '../../../shared/style'
 interface StyleProps {
   buttonType: PanelButtonTypes
   disabled?: boolean
+  addTopMargin?: boolean
 }
 
-export const StyledButton = styled.button<StyleProps>`
+export const StyledButton = styled(WalletButton) <Partial<StyleProps>>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,6 +18,7 @@ export const StyledButton = styled.button<StyleProps>`
   border-radius: 40px;
   padding: 10px 22px;
   outline: none;
+  margin-top: ${(p) => p.addTopMargin ? '8px' : '0px'};
   background-color: ${(p) =>
     p.disabled ? p.theme.color.disabled
       : p.buttonType === 'primary' ||

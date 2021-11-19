@@ -213,6 +213,7 @@ brave_java_resources = [
   "java/res/drawable-nodpi/eos.png",
   "java/res/drawable-nodpi/etc.png",
   "java/res/drawable-nodpi/eth.png",
+  "java/res/drawable-nodpi/fee_icon.png",
   "java/res/drawable-nodpi/link.png",
   "java/res/drawable-nodpi/loader0.png",
   "java/res/drawable-nodpi/loader0_orange.png",
@@ -792,7 +793,9 @@ brave_java_resources = [
   "java/res/layout/brave_toolbar.xml",
   "java/res/layout/brave_vpn_server_selection_item_layout.xml",
   "java/res/layout/brave_vpn_server_selection_layout.xml",
+  "java/res/layout/brave_wallet_autolock_layout.xml",
   "java/res/layout/brave_wallet_edit_gas.xml",
+  "java/res/layout/brave_wallet_reset_content.xml",
   "java/res/layout/brave_webrtc_policy_preference.xml",
   "java/res/layout/bre_bottom_banner.xml",
   "java/res/layout/copy_save_bottom_sheet.xml",
@@ -892,8 +895,8 @@ brave_java_resources = [
   "java/res/xml/brave_stats_preferences.xml",
   "java/res/xml/brave_theme_preferences.xml",
   "java/res/xml/brave_vpn_preferences.xml",
+  "java/res/xml/brave_wallet_preferences.xml",
   "java/res/xml/brave_webrtc_policy_preferences.xml",
-  "java/res/xml/clear_browsing_data_preferences_tab.xml",
   "java/res/xml/desktop_mode_preferences.xml",
   "java/res/xml/developer_preferences.xml",
   "java/res/xml/ens_preferences.xml",
@@ -905,5 +908,7 @@ brave_java_resources = [
 ]
 
 # XML preprocessing
-brave_java_preprocess_xml_sources = []
-brave_java_preprocess_module_sources = []
+brave_java_preprocess_xml_sources =
+    [ "//chrome/android/java/res/menu/main_menu.xml" ]
+brave_java_preprocess_module_sources =
+    [ "//brave/android/preprocess/xml/menu_main_menu_xml.py" ]

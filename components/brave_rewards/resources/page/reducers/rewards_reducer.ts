@@ -358,6 +358,11 @@ const rewardsReducer: Reducer<Rewards.State | undefined> = (state: Rewards.State
         break
       }
 
+      if (data.result === 42) { // type::Result::REQUEST_SIGNATURE_VERIFICATION_FAILURE
+        ui.modalRedirect = 'walletOwnershipVerificationFailureModal'
+        break
+      }
+
       if (data.result !== 0) {
         ui.modalRedirect = 'error'
         break
@@ -367,7 +372,7 @@ const rewardsReducer: Reducer<Rewards.State | undefined> = (state: Rewards.State
         chrome.send('brave_rewards.fetchBalance')
 
         if (data.action === 'authorization') {
-          const url = data.args['redirect_url']
+          const url = data.args.redirect_url
           if (url && url.length > 0) {
             window.open(url, '_self')
           }

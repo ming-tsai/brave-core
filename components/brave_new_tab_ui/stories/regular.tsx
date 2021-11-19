@@ -20,14 +20,13 @@ function getActions () {
 }
 
 // TODO(petemill): privateCDN should be in /common/
-import { getUnpaddedAsDataUrl } from '../../brave_extension/extension/brave_extension/background/today/privateCDN'
+import { getUnpaddedAsDataUrl } from '../../common/privateCDN'
 import getFTXStorybookState from '../widgets/ftx/ftx_storybook_state'
 
-// @ts-ignore
+// @ts-expect-error
 window.braveStorybookUnpadUrl = async function UnpadUrl (paddedUrl: string, mimeType = 'image/jpg'): Promise<string> {
   const response = await fetch(paddedUrl)
   const blob = await response.blob()
-  // @ts-ignore (Blob.arrayBuffer does exist)
   const buffer = await blob.arrayBuffer()
   const dataUrl = await getUnpaddedAsDataUrl(buffer, mimeType)
   return dataUrl

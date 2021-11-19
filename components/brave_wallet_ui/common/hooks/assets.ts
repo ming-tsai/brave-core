@@ -7,23 +7,43 @@ import * as React from 'react'
 
 import {
   AccountAssetOptionType,
-  TokenInfo,
+  ERCToken,
   WalletAccountType
 } from '../../constants/types'
 import { ETH } from '../../options/asset-options'
 
 export default function useAssets (
   selectedAccount: WalletAccountType,
-  fullTokenList: TokenInfo[],
-  userVisibleTokensInfo: TokenInfo[]
+  fullTokenList: ERCToken[],
+  userVisibleTokensInfo: ERCToken[]
 ) {
-  const tokenOptions: TokenInfo[] = React.useMemo(
+  const tokenOptions: ERCToken[] = React.useMemo(
     () =>
       fullTokenList.map((token) => ({
         ...token,
         logo: `chrome://erc-token-images/${token.logo}`
       })),
     [fullTokenList]
+  )
+
+  const userVisibleTokenOptions: ERCToken[] = React.useMemo(
+    () =>
+      userVisibleTokensInfo.map((token) => ({
+        ...token,
+        logo: `chrome://erc-token-images/${token.logo}`
+      })),
+    [userVisibleTokensInfo]
+  )
+
+  const sendAssetOptions: AccountAssetOptionType[] = React.useMemo(
+    () =>
+      userVisibleTokenOptions
+        .map((token) => ({
+          asset: token,
+          assetBalance: '0',
+          fiatBalance: '0'
+        })),
+    [userVisibleTokenOptions]
   )
 
   const assetOptions: AccountAssetOptionType[] = React.useMemo(() => {
@@ -36,31 +56,17 @@ export default function useAssets (
 
     return [
       ETH,
+
       ...assets.filter((asset) => asset.asset.symbol === 'BAT'),
-      ...assets.filter((asset) => asset.asset.symbol !== 'BAT')
+
+      ...sendAssetOptions
+        .filter(asset => !['BAT', 'ETH'].includes(asset.asset.symbol)),
+
+      ...assets
+        .filter(asset => !['BAT', 'ETH'].includes(asset.asset.symbol))
+        .filter(asset => !sendAssetOptions.some(token => token.asset.symbol === asset.asset.symbol))
     ]
-  }, [tokenOptions])
-
-  const userVisibleTokenOptions: TokenInfo[] = React.useMemo(
-    () =>
-      userVisibleTokensInfo.map((token) => ({
-        ...token,
-        logo: `chrome://erc-token-images/${token.logo}`
-      })),
-    [userVisibleTokensInfo]
-  )
-
-  const sendAssetOptions: AccountAssetOptionType[] = React.useMemo(() => {
-    const assets = userVisibleTokenOptions
-      .map((token) => ({
-        asset: token,
-        assetBalance: '0',
-        fiatBalance: '0'
-      }))
-    return assets
-  },
-    [userVisibleTokenOptions]
-  )
+  }, [tokenOptions, sendAssetOptions])
 
   return {
     tokenOptions,

@@ -1,16 +1,17 @@
 import styled from 'styled-components'
+import { WalletButton } from '../../shared/style'
 
 interface StyleProps {
   isSelected: boolean
 }
 
-export const StyledButton = styled.button<Partial<StyleProps>>`
-	display: flex;
+export const StyledButton = styled(WalletButton) <Partial<StyleProps>>`
+  display: flex;
   width: 240px;
-	align-items: center;
-	justify-content: center;
+  align-items: center;
+  justify-content: center;
   flex-direction: column;
-	cursor: pointer;
+  cursor: pointer;
   outline: none;
   padding: 10px 0px 0px 0px;
   border: none;
@@ -19,12 +20,12 @@ export const StyledButton = styled.button<Partial<StyleProps>>`
 
 export const ButtonText = styled.span<Partial<StyleProps>>`
   font-family: Poppins;
-	font-size: 12px;
-	font-weight: 600;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.04em;
   line-height: 18px;
   margin-bottom: 10px;
-	background: ${(p) =>
+  background: ${(p) =>
     p.isSelected ? p.theme.color.text01 : p.theme.color.text02};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

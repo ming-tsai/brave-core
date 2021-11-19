@@ -37,7 +37,16 @@ constexpr webui::LocalizedString kLocalizedStrings[] = {
     {"braveVpnFeature3", IDS_BRAVE_VPN_FEATURE_3},
     {"braveVpnFeature4", IDS_BRAVE_VPN_FEATURE_4},
     {"braveVpnFeature5", IDS_BRAVE_VPN_FEATURE_5},
+    {"braveVpnLoading", IDS_BRAVE_VPN_LOADING},
 };
+
+constexpr char kManageUrlProd[] = "http://account.brave.com/";
+constexpr char kManageUrlStaging[] = "http://account.bravesoftware.com/";
+constexpr char kManageUrlDev[] = "https://account.brave.software/";
+
+// TODO(simonhong): Update when vpn feedback url is ready.
+constexpr char kFeedbackUrl[] = "http://support.brave.com/";
+constexpr char kAboutUrl[] = "https://brave.com/firewall-vpn/";
 }  // namespace brave_vpn
 
 #endif  // BRAVE_COMPONENTS_BRAVE_VPN_BRAVE_VPN_CONSTANTS_H_

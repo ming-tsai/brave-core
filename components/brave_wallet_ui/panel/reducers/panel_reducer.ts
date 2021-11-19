@@ -2,10 +2,15 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* global window */
 
 import { createReducer } from 'redux-act'
-import { PanelState, SwapErrorResponse, SwapResponse } from '../../constants/types'
+import {
+  HardwareWalletErrorType,
+  PanelState,
+  SwapErrorResponse,
+  SwapResponse,
+  SwitchChainRequest
+} from '../../constants/types'
 import * as PanelActions from '../actions/wallet_panel_actions'
 import {
   ShowConnectToSitePayload,
@@ -22,9 +27,15 @@ const defaultState: PanelState = {
   tabId: -1,
   connectingAccounts: [],
   networkPayload: {
-    chainId: '0x1', chainName: 'Ethereum Mainnet',
-    rpcUrls: ['https://mainnet-infura.brave.com/'], blockExplorerUrls: [],
-    iconUrls: [], symbol: 'ETH', symbolName: 'Ethereum', decimals: 18, isEip1559: true
+    chainId: '0x1',
+    chainName: 'Ethereum Mainnet',
+    rpcUrls: ['https://mainnet-infura.brave.com/'],
+    blockExplorerUrls: [],
+    iconUrls: [],
+    symbol: 'ETH',
+    symbolName: 'Ethereum',
+    decimals: 18,
+    isEip1559: true
   },
   swapQuote: undefined,
   swapError: undefined,
@@ -32,7 +43,14 @@ const defaultState: PanelState = {
     id: -1,
     address: '',
     message: ''
-  }]
+  }],
+  switchChainRequest: {
+    origin: {
+      url: ''
+    },
+    chainId: ''
+  },
+  hardwareWalletError: undefined
 }
 
 const reducer = createReducer<PanelState>({}, defaultState)
@@ -64,6 +82,13 @@ reducer.on(PanelActions.addEthereumChain, (state: any, networkPayload: EthereumC
   }
 })
 
+reducer.on(PanelActions.switchEthereumChain, (state: any, request: SwitchChainRequest) => {
+  return {
+    ...state,
+    switchChainRequest: request
+  }
+})
+
 reducer.on(PanelActions.setPanelSwapQuote, (state: any, payload: SwapResponse) => {
   return {
     ...state,
@@ -82,6 +107,13 @@ reducer.on(PanelActions.signMessage, (state: any, payload: SignMessagePayload[])
   return {
     ...state,
     signMessageData: payload
+  }
+})
+
+reducer.on(PanelActions.setHardwareWalletInteractionError, (state: any, payload?: HardwareWalletErrorType) => {
+  return {
+    ...state,
+    hardwareWalletError: payload
   }
 })
 

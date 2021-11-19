@@ -23,7 +23,7 @@ import {
 import {
   WalletAccountType,
   PanelTypes,
-  AppObjectType,
+  AppItem,
   AppsListType,
   AccountAssetOptionType,
   BuySendSwapViewTypes,
@@ -94,7 +94,6 @@ const accounts: WalletAccountType[] = [
 ]
 
 export const _ConfirmTransaction = () => {
-
   const transactionInfo: TransactionInfo = {
     fromAddress: '0x7d66c9ddAED3115d93Bd1790332f3Cd06Cf52B14',
     id: '465a4d6646-kjlwf665',
@@ -106,19 +105,20 @@ export const _ConfirmTransaction = () => {
         gasLimit: '21000',
         to: '2',
         value: '0x15ddf09c97b0000',
-        data: new Uint8Array(24)
+        data: Array.from(new Uint8Array(24))
       },
       chainId: '0x0',
       maxPriorityFeePerGas: '',
-      maxFeePerGas: ''
+      maxFeePerGas: '',
+      gasEstimation: undefined
     },
     txHash: '0xab834bab0000000000000000000000007be8076f4ea4a4ad08075c2508e481d6c946d12b00000000000000000000000073a29a1da971497',
     txStatus: 0,
     txParams: ['address', 'ammount'],
     txType: TransactionType.ERC20Transfer,
-    createdTime: { microseconds: 0 },
-    submittedTime: { microseconds: 0 },
-    confirmedTime: { microseconds: 0 }
+    createdTime: { microseconds: BigInt(0) },
+    submittedTime: { microseconds: BigInt(0) },
+    confirmedTime: { microseconds: BigInt(0) }
   }
 
   const onConfirmTransaction = () => {
@@ -170,6 +170,7 @@ export const _ConfirmTransaction = () => {
   return (
     <StyledExtensionWrapperLonger>
       <ConfirmTransactionPanel
+        siteURL='https://app.uniswap.org'
         selectedNetwork={mockNetworks[0]}
         onQueueNextTransction={onQueueNextTransction}
         onRejectAllTransactions={onRejectAllTransactions}
@@ -185,6 +186,7 @@ export const _ConfirmTransaction = () => {
         updateUnapprovedTransactionGasFields={updateUnapprovedTransactionGasFields}
         updateUnapprovedTransactionSpendAllowance={updateUnapprovedTransactionSpendAllowance}
         getERC20Allowance={getERC20Allowance}
+        fullTokenList={NewAssetOptions}
       />
     </StyledExtensionWrapperLonger>
   )
@@ -195,7 +197,6 @@ _ConfirmTransaction.story = {
 }
 
 export const _AllowAddChangeNetwork = () => {
-
   const onApprove = () => {
     alert('Will Approve adding or chainging networks')
   }
@@ -213,6 +214,7 @@ export const _AllowAddChangeNetwork = () => {
       <AllowAddChangeNetworkPanel
         siteOrigin='https://app.uniswap.org'
         panelType='change'
+        selectedNetwork={mockNetworks[0]}
         onApproveAddNetwork={onApprove}
         onApproveChangeNetwork={onApprove}
         onCancel={onCancel}
@@ -228,7 +230,6 @@ _AllowAddChangeNetwork.story = {
 }
 
 export const _SignData = () => {
-
   const onSign = () => {
     alert('Signed Data')
   }
@@ -323,7 +324,7 @@ export const _ConnectedPanel = (args: { locked: boolean }) => {
   const [selectedAccount, setSelectedAccount] = React.useState<WalletAccountType>(
     accounts[0]
   )
-  const [favoriteApps, setFavoriteApps] = React.useState<AppObjectType[]>([
+  const [favoriteApps, setFavoriteApps] = React.useState<AppItem[]>([
     AppsList()[0].appList[0]
   ])
   const [filteredAppsList, setFilteredAppsList] = React.useState<AppsListType[]>(AppsList())
@@ -406,11 +407,11 @@ export const _ConnectedPanel = (args: { locked: boolean }) => {
     alert('Will expand to view more!')
   }
 
-  const addToFavorites = (app: AppObjectType) => {
+  const addToFavorites = (app: AppItem) => {
     const newList = [...favoriteApps, app]
     setFavoriteApps(newList)
   }
-  const removeFromFavorites = (app: AppObjectType) => {
+  const removeFromFavorites = (app: AppItem) => {
     const newList = favoriteApps.filter(
       (fav) => fav.name !== app.name
     )
@@ -585,7 +586,6 @@ _ConnectedPanel.story = {
 }
 
 export const _SetupWallet = () => {
-
   const onRestore = () => {
     alert('Will navigate to full wallet restore page')
   }
@@ -606,8 +606,11 @@ _SetupWallet.story = {
 }
 
 export const _ConnectHardwareWallet = () => {
-
   const onCancel = () => {
+    // Doesn't do anything in storybook
+  }
+
+  const onConfirmTransaction = () => {
     // Doesn't do anything in storybook
   }
 
@@ -615,9 +618,8 @@ export const _ConnectHardwareWallet = () => {
     <StyledExtensionWrapper>
       <ConnectHardwareWalletPanel
         walletName='Ledger 1'
-        isConnected={true}
         onCancel={onCancel}
-        requestingConfirmation={true}
+        retryCallable={onConfirmTransaction}
       />
     </StyledExtensionWrapper>
   )

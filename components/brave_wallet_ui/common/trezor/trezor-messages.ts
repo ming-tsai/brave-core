@@ -2,16 +2,25 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // you can obtain one at http://mozilla.org/MPL/2.0/.
-
 import { loadTimeData } from '../../../common/loadTimeData'
-import { Unsuccessful, Success } from 'trezor-connect'
-import { HDNodeResponse } from 'trezor-connect/lib/typescript/trezor/protobuf'
+import { Unsuccessful, EthereumSignTransaction, CommonParams, Success } from 'trezor-connect'
+import { HDNodeResponse } from 'trezor-connect/lib/typescript'
+import { EthereumSignedTx, EthereumSignMessage } from 'trezor-connect/lib/typescript/networks/ethereum'
+import { MessageSignature } from 'trezor-connect/lib/typescript/trezor/protobuf'
 export const kTrezorBridgeUrl = loadTimeData.getString('braveWalletTrezorBridgeUrl')
 
 export enum TrezorCommand {
   Unlock = 'trezor-unlock',
-  GetAccounts = 'trezor-get-accounts'
+  GetAccounts = 'trezor-get-accounts',
+  SignTransaction = 'trezor-sign-transaction',
+  SignMessage = 'trezor-sign-message'
 }
+
+export enum TrezorErrorsCodes {
+  BridgeNotReady = 0,
+  CommandInProgress = 1
+}
+
 export type CommandMessage = {
   command: TrezorCommand
   id: string
@@ -20,32 +29,61 @@ export type CommandMessage = {
 export type TrezorAccountPath = {
   path: string
 }
-export type GetAccountsCommand = CommandMessage & {
-  command: TrezorCommand.GetAccounts,
-  paths: TrezorAccountPath[]
+export type TrezorAccount = {
+  publicKey: string
+  serializedPath: string
+  fingerprint: number
+}
+export type TrezorError = {
+  error: string
+  code?: string | number
+}
+
+// Unlock command
+export type UnlockResponse = Unsuccessful | {
+  success: boolean
+}
+export type UnlockResponsePayload = CommandMessage & {
+  payload: UnlockResponse
 }
 export type UnlockCommand = CommandMessage & {
   command: TrezorCommand.Unlock
 }
-export type UnlockResponse = CommandMessage & {
-  result: Boolean,
-  error?: Unsuccessful
-}
-export type TrezorAccount = {
-  publicKey: string
-  serializedPath: string,
-  fingerprint: number
-}
-export type TrezorError = {
-  error: string,
-  code: string
-}
-export type TrezorGetPublicKeyResponse = Unsuccessful | Success<HDNodeResponse[]>
+
+// GetAccounts command
+export type TrezorGetAccountsResponse = Unsuccessful | Success<HDNodeResponse[]>
 export type GetAccountsResponsePayload = CommandMessage & {
-  payload: TrezorGetPublicKeyResponse
+  payload: TrezorGetAccountsResponse
 }
-export type TrezorFrameCommand = GetAccountsCommand | UnlockCommand
-export type TrezorFrameResponse = UnlockResponse | GetAccountsResponsePayload
+export type GetAccountsCommand = CommandMessage & {
+  command: TrezorCommand.GetAccounts
+  paths: TrezorAccountPath[]
+}
+
+// SignTransaction command
+export type SignTransactionCommandPayload = CommonParams & EthereumSignTransaction
+export type SignTransactionCommand = CommandMessage & {
+  command: TrezorCommand.SignTransaction
+  payload: SignTransactionCommandPayload
+}
+export type SignTransactionResponse = Unsuccessful | Success<EthereumSignedTx>
+export type SignTransactionResponsePayload = CommandMessage & {
+  payload: SignTransactionResponse
+}
+
+// SignMessage command
+export type SignMessageCommandPayload = CommonParams & EthereumSignMessage
+export type SignMessageCommand = CommandMessage & {
+  command: TrezorCommand.SignMessage
+  payload: SignMessageCommandPayload
+}
+export type SignMessageResponse = Unsuccessful | Success<MessageSignature>
+export type SignMessageResponsePayload = CommandMessage & {
+  payload: SignMessageResponse
+}
+
+export type TrezorFrameCommand = GetAccountsCommand | UnlockCommand | SignTransactionCommand | SignMessageCommand
+export type TrezorFrameResponse = UnlockResponsePayload | GetAccountsResponsePayload | SignTransactionResponsePayload | SignMessageResponsePayload
 
 // Trezor library is loaded inside the chrome-untrusted webui page
 // and communication is going through posting messages between parent window
@@ -58,7 +96,7 @@ export abstract class MessagingTransport {
 
   protected handlers: Map<string, Function>
 
-  addCommandHandler = (id: string, listener: Function): Boolean => {
+  addCommandHandler = (id: string, listener: Function): boolean => {
     if (!this.handlers.size) {
       this.addWindowMessageListener()
       this.handlers.clear()
@@ -83,11 +121,11 @@ export abstract class MessagingTransport {
 
   protected abstract onMessageReceived (event: MessageEvent): unknown
 
-  private addWindowMessageListener = () => {
+  private readonly addWindowMessageListener = () => {
     window.addEventListener('message', this.onMessageReceived)
   }
 
-  private removeWindowMessageListener = () => {
+  private readonly removeWindowMessageListener = () => {
     window.removeEventListener('message', this.onMessageReceived)
   }
 }

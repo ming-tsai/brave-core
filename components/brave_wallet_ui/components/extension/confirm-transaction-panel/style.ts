@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 import { ArrowRightIcon } from 'brave-ui/components/icons'
-import { AssetIconProps, AssetIconFactory } from '../../shared/style'
+import { AssetIconProps, AssetIconFactory, WalletButton } from '../../shared/style'
 
 interface StyleProps {
   orb: string
@@ -172,6 +172,23 @@ export const SectionRow = styled.div`
   height: inherit;
 `
 
+export const SectionColumn = styled.div`
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex-direction: column;
+  width: 100%;
+  height: inherit;
+`
+
+export const SingleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row;
+  width: 100%;
+`
+
 export const SectionRightColumn = styled.div`
   display: flex;
   align-items: flex-end;
@@ -187,7 +204,7 @@ export const TopColumn = styled.div`
   width: 100%;
 `
 
-export const EditButton = styled.button`
+export const EditButton = styled(WalletButton)`
   font-family: Poppins;
   font-style: normal;
   font-weight: 600;
@@ -272,7 +289,7 @@ export const QueueStepText = styled.span`
   margin-right: 9px;
 `
 
-export const QueueStepButton = styled.button<Partial<StyleProps>>`
+export const QueueStepButton = styled(WalletButton) <Partial<StyleProps>>`
   font-family: Poppins;
   font-style: normal;
   font-weight: 600;
@@ -285,6 +302,16 @@ export const QueueStepButton = styled.button<Partial<StyleProps>>`
   margin: 0px;
   padding: 0px;
   margin-bottom: ${(p) => p.needsMargin ? '12px' : '0px'};
+`
+
+export const ErrorText = styled.span`
+  font-family: Poppins;
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: 0.01em;
+  color: ${(p) => p.theme.color.errorText};
+  margin-bottom: 6px;
+  text-align: center;
 `
 
 export const AssetIcon = AssetIconFactory<AssetIconProps>({

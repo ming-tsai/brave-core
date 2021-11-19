@@ -1,6 +1,6 @@
 {
   "name": "brave-core",
-  "version": "1.33.70",
+  "version": "1.34.27",
   "description": "Brave Core is a set of changes, APIs, and scripts used for customizing Chromium to make Brave.",
   "main": "index.js",
   "scripts": {
@@ -19,16 +19,18 @@
     "update_patches": "node ./build/commands/scripts/commands.js update_patches",
     "apply_patches": "node ./build/commands/scripts/commands.js apply_patches",
     "start": "node ./build/commands/scripts/commands.js start",
-    "network-audit": "node ./build/commands/scripts/commands.js start --enable_brave_update --network_log --user_data_dir_name=brave-network-test --disable-doh",
+    "network-audit": "npm run test brave_network_audit_tests -- --ui-test-action-timeout=330000 --test-launcher-timeout=1000000",
     "push_l10n": "node ./build/commands/scripts/commands.js push_l10n",
     "pull_l10n": "node ./build/commands/scripts/commands.js pull_l10n",
     "chromium_rebase_l10n": "node ./build/commands/scripts/commands.js chromium_rebase_l10n",
     "lint": "node ./build/commands/scripts/commands.js lint",
     "format": "node ./build/commands/scripts/commands.js format",
+    "preinstall": "npx --yes -- npm-force-resolutions@0.0.10",
     "test": "node ./build/commands/scripts/commands.js test",
     "test:scripts": "jest build/commands/lib build/commands/scripts",
-    "test-security": "npm run check_security && npm run audit_deps && node ./build/commands/scripts/commands.js start --enable_brave_update --network_log --user_data_dir_name=brave-network-test",
-    "tslint": "tslint --project tsconfig-lint.json \"components/**/*.{ts,tsx}\"",
+    "test-security": "npm run check_security && npm run audit_deps && npm run network-audit",
+    "tslint": "npm run eslint",
+    "eslint": "eslint -c .eslintrc.json ./components",
     "pep8": "pycodestyle --max-line-length 120 -r script",
     "pylint": "node ./build/commands/scripts/commands.js pylint",
     "web-ui-gen-grd": "node components/webpack/gen-webpack-grd",
@@ -238,6 +240,10 @@
     {
       "name": "Szilard Szaloki",
       "email": "szilardszaloki@gmail.com"
+    },
+    {
+      "name": "Wojciech Knapik",
+      "email": "wmknapik@gmail.com"
     }
   ],
   "license": "MPL-2.0",
@@ -249,12 +255,16 @@
     "projects": {
       "chrome": {
         "dir": "src",
-        "tag": "96.0.4664.35",
+        "tag": "96.0.4664.45",
         "repository": {
           "url": "https://github.com/chromium/chromium"
         }
       }
     }
+  },
+  "resolutions": {
+    "immer": "9.0.6",
+    "set-value": "4.1.0"
   },
   "devDependencies": {
     "@babel/core": "7.16.0",
@@ -280,6 +290,7 @@
     "@types/recharts": "1.8.19",
     "@types/redux-logger": "3.0.8",
     "@types/styled-components": "5.1.9",
+    "@typescript-eslint/eslint-plugin": "4.33.0",
     "acorn": "8.0.5",
     "babel-loader": "8.2.3",
     "brave-ui": "github:brave/brave-ui#5b2069a51eea6ec4577b433bb9e48b5ab2aabbe9",
@@ -291,9 +302,14 @@
     "enhanced-resolve": "5.8.3",
     "enzyme": "3.11.0",
     "enzyme-adapter-react-16": "1.15.6",
+    "eslint": "7.32.0",
+    "eslint-config-standard-with-typescript": "21.0.1",
+    "eslint-plugin-import": "2.25.2",
+    "eslint-plugin-jest": "25.2.2",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "5.1.1",
     "ethereum-blockies": "github:brave/blockies#07ebdfa3ed79fceec8234ef8c880ebdefd79bf0a",
     "ethereumjs-util": "7.0.9",
-    "trezor-connect": "8.1.5-extended",
     "file-loader": "1.1.11",
     "font-awesome": "4.7.0",
     "fs-extra": "8.1.0",
@@ -313,11 +329,9 @@
     "sinon": "7.5.0",
     "style-loader": "0.23.1",
     "styled-components": "5.3.0",
+    "trezor-connect": "8.2.1-extended",
     "ts-jest": "26.5.6",
     "ts-loader": "6.2.2",
-    "tslint": "5.20.1",
-    "tslint-config-standard": "7.1.0",
-    "tslint-react": "3.6.0",
     "typesafe-actions": "2.2.0",
     "typescript": "4.4.4",
     "typescript-plugin-styled-components": "2.0.0",

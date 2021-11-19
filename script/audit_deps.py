@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-"""This script runs `npm audit' and `cargo audit' on relevant paths in the repo."""
+"""This script runs `npm audit' and `cargo audit' """ \
+"""on relevant paths in the repo."""
 
 # Copyright (c) 2020 The Brave Authors. All rights reserved.
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -25,11 +26,6 @@ NPM_EXCLUDE_PATHS = [
 # Tag @sec-team before adding any advisory to this list
 # Ignore these rust advisories
 IGNORED_CARGO_ADVISORIES = [
-    # Remove when:
-    # https://github.com/chronotope/chrono/issues/602 is resolved
-    # Tracking issue: https://github.com/brave/brave-browser/issues/18838
-    'RUSTSEC-2020-0071',
-    'RUSTSEC-2020-0159'
 ]
 
 # Use only these (sub)paths for cargo audit.
@@ -40,16 +36,20 @@ CARGO_INCLUDE_PATHS = [
 # Ping security team before adding to ignored_npm_advisories
 ignored_npm_advisories = [
     # These are issues in dev depencies, no updates are available yet
-    # To-Do (@jumde) - Remove when https://github.com/brave/brave-browser/issues/18662 is fixed
+    # To-Do (@jumde) -
+    # Remove when https://github.com/brave/brave-browser/issues/18662 is fixed
     1002401,    # https://github.com/advisories/GHSA-93q8-gq69-wqmw
     1002422,    # https://github.com/advisories/GHSA-hqhp-5p83-hx96
-    1002475,    # https://github.com/advisories/GHSA-4jqc-8m5r-9rpr
-    1002487,    # https://github.com/advisories/GHSA-c36v-fmgq-m8hx
     1002492,    # https://github.com/advisories/GHSA-33f9-j839-rf8h
     1002522,    # https://github.com/advisories/GHSA-whgm-jr23-g3j9
     1002627,    # https://github.com/advisories/GHSA-ww39-953v-wcq6
     1002655,    # https://github.com/advisories/GHSA-w8qv-6jwh-64r5
-    1002775     # https://github.com/advisories/GHSA-w5p7-h5w8-2hfq
+    1002775,    # https://github.com/advisories/GHSA-w5p7-h5w8-2hfq
+    1004946,    # https://github.com/advisories/GHSA-93q8-gq69-wqmw
+    1005059,    # https://github.com/advisories/GHSA-whgm-jr23-g3j9
+    1005154,    # https://github.com/advisories/GHSA-ww39-953v-wcq6
+    1005174,    # https://github.com/advisories/GHSA-w8qv-6jwh-64r5
+    1005291     # https://github.com/advisories/GHSA-w5p7-h5w8-2hfq
 ]
 
 
@@ -62,7 +62,8 @@ def main():
     if args.input_dir:
         return audit_path(os.path.abspath(args.input_dir), args)
 
-    for path in [os.path.dirname(os.path.dirname(args.source_root)), args.source_root]:
+    for path in [os.path.dirname(os.path.dirname(args.source_root)), \
+                args.source_root]:
         errors += audit_path(path, args)
 
     for dir_path, dirs, dummy in os.walk(args.source_root):
@@ -183,7 +184,8 @@ def extract_resolutions(result):
         for _, v in advisories.items():
             via = v['via']
             for item in via:
-                if isinstance(item, dict) and item['source'] not in ignored_npm_advisories:
+                if isinstance(item, dict) and \
+                   item['source'] not in ignored_npm_advisories:
                     resolutions.append(item)
     # npm 6 and earlier
     if 'advisories' in result:
