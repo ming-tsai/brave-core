@@ -760,6 +760,7 @@ if (!is_android) {
       "//brave/vendor/bat-native-ledger",
       "//brave/vendor/bat-native-ledger:publishers_proto",
       "//chrome/browser",
+      "//components/optimization_guide/core",
       "//components/reading_list/features:flags",
       "//components/security_interstitials/content:security_interstitial_page",
       "//components/user_prefs",
