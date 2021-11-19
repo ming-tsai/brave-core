@@ -129,7 +129,7 @@ void EligibleAdsV1::GetForParentSegments(
       segments, dimensions,
       [=](const bool success, const SegmentList& segments,
           const CreativeInlineContentAdList& creative_ads) {
-        CreativeInlineContentAdList eligible_creative_ads =
+        const CreativeInlineContentAdList eligible_creative_ads =
             FilterCreativeAds(creative_ads, ad_events, browsing_history);
 
         if (eligible_creative_ads.empty()) {

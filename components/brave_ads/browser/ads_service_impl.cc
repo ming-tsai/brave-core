@@ -531,12 +531,13 @@ bool AdsServiceImpl::IsEnabled() const {
 }
 
 bool AdsServiceImpl::IsBraveNewsEnabled() const {
+  bool is_brave_news_enabled = false;
   if (base::FeatureList::IsEnabled(brave_today::features::kBraveNewsFeature)) {
-    return GetBooleanPref(brave_news::prefs::kBraveTodayOptedIn) &&
-           GetBooleanPref(brave_news::prefs::kNewTabPageShowToday);
-  } else {
-    return false;
+    is_brave_news_enabled =
+        GetBooleanPref(brave_news::prefs::kBraveTodayOptedIn) &&
+        GetBooleanPref(brave_news::prefs::kNewTabPageShowToday);
   }
+  return is_brave_news_enabled;
 }
 
 bool AdsServiceImpl::ShouldStart() const {
@@ -675,17 +676,17 @@ void AdsServiceImpl::Initialize() {
       brave_rewards::prefs::kWalletBrave,
       base::BindRepeating(&AdsServiceImpl::OnPrefsChanged,
                           base::Unretained(this)));
-  if (base::FeatureList::IsEnabled(brave_today::features::kBraveNewsFeature)) {
-    profile_pref_change_registrar_.Add(
-        brave_news::prefs::kBraveTodayOptedIn,
-        base::BindRepeating(&AdsServiceImpl::OnPrefsChanged,
-                            base::Unretained(this)));
 
-    profile_pref_change_registrar_.Add(
-        brave_news::prefs::kNewTabPageShowToday,
-        base::BindRepeating(&AdsServiceImpl::OnPrefsChanged,
-                            base::Unretained(this)));
-  }
+  profile_pref_change_registrar_.Add(
+      brave_news::prefs::kBraveTodayOptedIn,
+      base::BindRepeating(&AdsServiceImpl::OnPrefsChanged,
+                          base::Unretained(this)));
+
+  profile_pref_change_registrar_.Add(
+      brave_news::prefs::kNewTabPageShowToday,
+      base::BindRepeating(&AdsServiceImpl::OnPrefsChanged,
+                          base::Unretained(this)));
+
   MaybeStart(false);
 }
 

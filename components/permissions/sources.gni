@@ -23,7 +23,6 @@ brave_components_permissions_sources = [
 
 brave_components_permissions_deps = [
   "//base",
-  "//brave/components/brave_today/common/buildflags",
   "//brave/components/brave_wallet/browser:ethereum_permission_utils",
   "//brave/components/resources:strings_grit",
   "//components/content_settings/core/browser",

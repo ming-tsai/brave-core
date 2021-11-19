@@ -10,13 +10,13 @@ union Image {
 };
 
 enum CardType {
-  HEADLINE,         //0
-  HEADLINE_PAIRED,  //1
-  CATEGORY_GROUP,   //2
-  PUBLISHER_GROUP,  //3
-  DEALS,            //4
-  DISPLAY_AD,       //5
-  PROMOTED_ARTICLE  //6
+  HEADLINE,
+  HEADLINE_PAIRED,
+  CATEGORY_GROUP,
+  PUBLISHER_GROUP,
+  DEALS,
+  DISPLAY_AD,
+  PROMOTED_ARTICLE
 };
 
 struct FeedItemMetadata {
